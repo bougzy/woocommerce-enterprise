@@ -1,0 +1,96 @@
+/* WC Enterprise Toolkit — Product Filters */
+
+.wcet-product-filters {
+    background: #f8fafc;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.wcet-product-filters h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.wcet-filter-group {
+    margin-bottom: 1rem;
+}
+
+.wcet-filter-group h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.wcet-filter-group label {
+    display: block;
+    padding: 2px 0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #475569;
+}
+
+.wcet-filter-group label:hover {
+    color: #1e293b;
+}
+
+.wcet-filter-group label span {
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.wcet-filter-group select {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.wcet-price-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wcet-price-range input {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.wcet-apply-filters {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.wcet-apply-filters:hover {
+    background: #1d4ed8;
+}
+
+.wcet-clear-filters {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.wcet-clear-filters:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}

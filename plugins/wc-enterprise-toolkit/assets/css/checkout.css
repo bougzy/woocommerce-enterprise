@@ -1,0 +1,119 @@
+/* WC Enterprise Toolkit — Checkout Styles */
+
+.wcet-checkout-steps {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.wcet-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.wcet-step.active {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.wcet-step .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: 2px solid currentColor;
+    transition: all 0.2s;
+}
+
+.wcet-step.active .step-number {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+.wcet-step.completed .step-number {
+    background: #22c55e;
+    color: #fff;
+    border-color: #22c55e;
+}
+
+.wcet-checkout-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.wcet-checkout-nav .button {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Express Checkout */
+.wcet-express-checkout {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border: 1px solid #e2e8f0;
+}
+
+.wcet-express-checkout h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #64748b;
+}
+
+.wcet-express-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.wcet-divider {
+    position: relative;
+    margin: 1.5rem 0;
+}
+
+.wcet-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.wcet-divider span {
+    position: relative;
+    background: #f8fafc;
+    padding: 0 1rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .wcet-checkout-steps {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .wcet-step .step-label {
+        font-size: 0.85rem;
+    }
+}

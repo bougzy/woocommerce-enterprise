@@ -1,0 +1,116 @@
+/* WC Enterprise Toolkit — Admin Dashboard Styles */
+
+.wcet-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.wcet-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 6px;
+    padding: 20px;
+    transition: box-shadow 0.2s;
+}
+
+.wcet-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.wcet-card h3 {
+    font-size: 0.85rem;
+    color: #646970;
+    margin: 0 0 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wcet-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1d2327;
+    margin: 0;
+}
+
+.wcet-card .change {
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.wcet-card .change.positive { color: #00a32a; }
+.wcet-card .change.negative { color: #d63638; }
+
+.wcet-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.wcet-section h2 {
+    font-size: 1.1rem;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Status badges */
+.wcet-status-pending    { color: #996800; background: #fcf0b4; padding: 2px 8px; border-radius: 3px; font-size: 0.85rem; }
+.wcet-status-processing { color: #0a4b78; background: #b8d4e3; padding: 2px 8px; border-radius: 3px; font-size: 0.85rem; }
+.wcet-status-completed  { color: #0f5132; background: #d1e7dd; padding: 2px 8px; border-radius: 3px; font-size: 0.85rem; }
+.wcet-status-failed     { color: #842029; background: #f8d7da; padding: 2px 8px; border-radius: 3px; font-size: 0.85rem; }
+
+/* Performance score */
+.wcet-score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.wcet-score.good    { background: #00a32a; }
+.wcet-score.average { background: #dba617; }
+.wcet-score.poor    { background: #d63638; }
+
+/* Health check */
+.wcet-health-list {
+    list-style: none;
+    padding: 0;
+}
+
+.wcet-health-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wcet-health-list .status-pass { color: #00a32a; }
+.wcet-health-list .status-warn { color: #dba617; }
+.wcet-health-list .status-fail { color: #d63638; }
+
+/* Security checklist */
+.wcet-checklist {
+    list-style: none;
+    padding: 0;
+}
+
+.wcet-checklist li {
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wcet-checklist .dashicons-yes { color: #00a32a; }
+.wcet-checklist .dashicons-no  { color: #d63638; }
