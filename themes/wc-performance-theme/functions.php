@@ -76,7 +76,7 @@ add_action( 'wp_head', function () {
 }, 1 );
 
 // --- Performance: Lazy Load Images ---
-add_filter( 'wp_get_attachment_image_attributes', function ( array $attr ): array {
+add_filter( 'wp_get_attachment_image_attributes', function ( array $attr ) {
     if ( ! is_admin() ) {
         $attr['loading'] = 'lazy';
         $attr['decoding'] = 'async';

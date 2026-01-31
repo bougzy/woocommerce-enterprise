@@ -24,7 +24,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @var WC_Logger|null
 	 */
-	private ?WC_Logger $logger = null;
+	private $logger = null;
 
 	/**
 	 * Constructor — set up gateway properties and hooks.
@@ -75,7 +75,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Define gateway settings fields.
 	 */
-	public function init_form_fields(): void {
+	public function init_form_fields() {
 		$this->form_fields = [
 			'enabled'              => [
 				'title'   => __( 'Enable/Disable', 'wc-enterprise' ),
@@ -165,7 +165,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Enqueue Stripe.js and our checkout handler on the checkout page.
 	 */
-	public function enqueue_scripts(): void {
+	public function enqueue_scripts() {
 		if ( ! is_checkout() || ! $this->is_available() ) {
 			return;
 		}
@@ -200,7 +200,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Render payment fields on the checkout form.
 	 */
-	public function payment_fields(): void {
+	public function payment_fields() {
 		if ( $this->description ) {
 			echo wp_kses_post( wpautop( wptexturize( $this->description ) ) );
 		}
@@ -229,7 +229,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id WooCommerce order ID.
 	 * @return array{result: string, redirect?: string}
 	 */
-	public function process_payment( $order_id ): array {
+	public function process_payment( $order_id ) {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -280,7 +280,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param WC_Order $order  WooCommerce order.
 	 * @return array{result: string, redirect?: string}
 	 */
-	private function handle_intent_status( array $intent, WC_Order $order ): array {
+	private function handle_intent_status( array $intent, WC_Order $order ) {
 		switch ( $intent['status'] ) {
 			case 'succeeded':
 				return $this->complete_payment( $order, $intent );
@@ -333,7 +333,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param array    $intent Stripe PaymentIntent data.
 	 * @return array{result: string, redirect: string}
 	 */
-	private function complete_payment( WC_Order $order, array $intent ): array {
+	private function complete_payment( WC_Order $order, array $intent ) {
 		// Prevent double-processing.
 		if ( $order->is_paid() ) {
 			return [
@@ -372,7 +372,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Handle the redirect return from 3D Secure authentication.
 	 */
-	public function handle_redirect_return(): void {
+	public function handle_redirect_return() {
 		$intent_id = isset( $_GET['payment_intent'] ) ? sanitize_text_field( wp_unslash( $_GET['payment_intent'] ) ) : '';
 
 		if ( empty( $intent_id ) ) {
@@ -642,7 +642,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param string $prefix Key prefix for nested arrays.
 	 * @return array Flat key => value pairs.
 	 */
-	private function flatten_params( array $params, string $prefix = '' ): array {
+	private function flatten_params( array $params, string $prefix = '' ) {
 		$flat = [];
 
 		foreach ( $params as $key => $value ) {
@@ -674,7 +674,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	public function is_test_mode(): bool {
+	public function is_test_mode() {
 		return 'yes' === $this->get_option( 'test_mode', 'yes' );
 	}
 
@@ -685,7 +685,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param string $currency ISO 4217 currency code.
 	 * @return int Amount in smallest currency unit.
 	 */
-	private function get_stripe_amount( float $amount, string $currency ): int {
+	private function get_stripe_amount( float $amount, string $currency ) {
 		$zero_decimal_currencies = [
 			'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW',
 			'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF',
@@ -704,7 +704,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_webhook_secret(): string {
+	public function get_webhook_secret() {
 		return $this->webhook_secret;
 	}
 
@@ -713,7 +713,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_secret_key(): string {
+	public function get_secret_key() {
 		return $this->secret_key;
 	}
 
@@ -724,7 +724,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 	 * @param string $message Log message.
 	 * @param array  $context Additional context data.
 	 */
-	private function log( string $level, string $message, array $context = [] ): void {
+	private function log( string $level, string $message, array $context = [] ) {
 		if ( 'yes' !== $this->get_option( 'logging', 'no' ) ) {
 			return;
 		}
@@ -740,7 +740,7 @@ class WCET_Stripe_Gateway extends WC_Payment_Gateway {
 }
 
 // Register the gateway with WooCommerce.
-add_filter( 'woocommerce_payment_gateways', function ( array $gateways ): array {
+add_filter( 'woocommerce_payment_gateways', function ( array $gateways ) {
 	$gateways[] = 'WCET_Stripe_Gateway';
 	return $gateways;
 } );

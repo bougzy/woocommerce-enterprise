@@ -23,7 +23,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Database table name (without prefix).
@@ -58,14 +58,14 @@ class WCET_Rate_Limiter {
 	 *
 	 * @var array<string, array{limit: int, window: int}>
 	 */
-	private array $endpoint_limits = [];
+	private $endpoint_limits = [];
 
 	/**
 	 * Get singleton instance.
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -100,7 +100,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return void
 	 */
-	public function maybe_create_table(): void {
+	public function maybe_create_table() {
 		$db_version_key  = 'wcet_rate_limits_db_version';
 		$current_version = '1.0.0';
 
@@ -141,7 +141,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return void
 	 */
-	private function load_endpoint_limits(): void {
+	private function load_endpoint_limits() {
 		$overrides = get_option( 'wcet_rate_limit_overrides', [] );
 
 		if ( is_array( $overrides ) ) {
@@ -170,7 +170,7 @@ class WCET_Rate_Limiter {
 	public function check_rate_limit( $result, WP_REST_Server $server, WP_REST_Request $request ) {
 		// Only rate-limit WCET API endpoints.
 		$route = $request->get_route();
-		if ( ! str_starts_with( $route, '/wcet/' ) ) {
+		if ( strpos( $route, '/wcet/' ) !== 0 ) {
 			return $result;
 		}
 
@@ -241,7 +241,7 @@ class WCET_Rate_Limiter {
 	 * @param WP_REST_Request  $request  The request.
 	 * @return WP_REST_Response
 	 */
-	public function add_rate_limit_headers( WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_REST_Response {
+	public function add_rate_limit_headers( WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request ) {
 		$limit     = $request->get_param( '_wcet_rate_limit' );
 		$remaining = $request->get_param( '_wcet_rate_remaining' );
 		$reset     = $request->get_param( '_wcet_rate_reset' );
@@ -265,7 +265,7 @@ class WCET_Rate_Limiter {
 	 * @param int    $window     The window duration in seconds.
 	 * @return array{request_count: int, window_end: string}
 	 */
-	private function get_or_create_window( string $identifier, string $endpoint, int $window ): array {
+	private function get_or_create_window( string $identifier, string $endpoint, int $window ) {
 		global $wpdb;
 
 		$table        = $wpdb->prefix . self::TABLE_NAME;
@@ -321,7 +321,7 @@ class WCET_Rate_Limiter {
 	 * @param string $endpoint The normalized endpoint path.
 	 * @return array{limit: int, window: int}
 	 */
-	private function get_limits_for_endpoint( string $endpoint ): array {
+	private function get_limits_for_endpoint( string $endpoint ) {
 		if ( isset( $this->endpoint_limits[ $endpoint ] ) ) {
 			return wp_parse_args( $this->endpoint_limits[ $endpoint ], [
 				'limit'  => self::DEFAULT_LIMIT,
@@ -356,7 +356,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return string
 	 */
-	private function get_request_identifier(): string {
+	private function get_request_identifier() {
 		// If authenticated via WCET token, use the token ID.
 		if ( class_exists( 'WCET_Token_Auth' ) ) {
 			$token_auth  = WCET_Token_Auth::instance();
@@ -386,7 +386,7 @@ class WCET_Rate_Limiter {
 	 * @param string $route The full route path.
 	 * @return string
 	 */
-	private function normalize_endpoint( string $route ): string {
+	private function normalize_endpoint( string $route ) {
 		// Replace numeric path segments with a placeholder.
 		$normalized = preg_replace( '#/\d+(?=/|$)#', '/{id}', $route );
 		return $normalized ?: $route;
@@ -397,7 +397,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return string
 	 */
-	private function get_client_ip(): string {
+	private function get_client_ip() {
 		$headers = [
 			'HTTP_CF_CONNECTING_IP',
 			'HTTP_X_FORWARDED_FOR',
@@ -408,7 +408,7 @@ class WCET_Rate_Limiter {
 		foreach ( $headers as $header ) {
 			if ( ! empty( $_SERVER[ $header ] ) ) {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
-				if ( str_contains( $ip, ',' ) ) {
+				if ( strpos( $ip, ',' ) !== false ) {
 					$ip = trim( explode( ',', $ip )[0] );
 				}
 				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
@@ -427,7 +427,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return int Number of rows deleted.
 	 */
-	public function cleanup_expired_entries(): int {
+	public function cleanup_expired_entries() {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::TABLE_NAME;
@@ -462,7 +462,7 @@ class WCET_Rate_Limiter {
 	 * @param string $endpoint   The endpoint path.
 	 * @return array{limit: int, remaining: int, reset: int}|null
 	 */
-	public function get_rate_status( string $identifier, string $endpoint ): ?array {
+	public function get_rate_status( string $identifier, string $endpoint ) {
 		global $wpdb;
 
 		$table   = $wpdb->prefix . self::TABLE_NAME;
@@ -507,7 +507,7 @@ class WCET_Rate_Limiter {
 	 * @param int    $window   Window duration in seconds.
 	 * @return void
 	 */
-	public function set_endpoint_limit( string $endpoint, int $limit, int $window = self::DEFAULT_WINDOW ): void {
+	public function set_endpoint_limit( string $endpoint, int $limit, int $window = self::DEFAULT_WINDOW ) {
 		$this->endpoint_limits[ $endpoint ] = [
 			'limit'  => max( 1, $limit ),
 			'window' => max( 1, $window ),
@@ -522,7 +522,7 @@ class WCET_Rate_Limiter {
 	 * @param string $endpoint The endpoint path.
 	 * @return void
 	 */
-	public function remove_endpoint_limit( string $endpoint ): void {
+	public function remove_endpoint_limit( string $endpoint ) {
 		unset( $this->endpoint_limits[ $endpoint ] );
 		update_option( 'wcet_rate_limit_overrides', $this->endpoint_limits );
 	}
@@ -533,7 +533,7 @@ class WCET_Rate_Limiter {
 	 * @param string $identifier The client identifier.
 	 * @return bool
 	 */
-	public function reset_identifier( string $identifier ): bool {
+	public function reset_identifier( string $identifier ) {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::TABLE_NAME;
@@ -555,7 +555,7 @@ class WCET_Rate_Limiter {
 	 *
 	 * @return void
 	 */
-	public static function deactivate(): void {
+	public static function deactivate() {
 		$timestamp = wp_next_scheduled( self::CLEANUP_HOOK );
 		if ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CLEANUP_HOOK );

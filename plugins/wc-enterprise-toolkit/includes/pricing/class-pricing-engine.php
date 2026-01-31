@@ -10,10 +10,10 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Pricing_Engine {
 
-    private static ?self $instance = null;
-    private array $rules_cache = [];
+    private static $instance = null;
+    private $rules_cache = [];
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -32,7 +32,7 @@ class WCET_Pricing_Engine {
     /**
      * Get all active pricing rules, ordered by priority.
      */
-    public function get_active_rules(): array {
+    public function get_active_rules() {
         if ( ! empty( $this->rules_cache ) ) {
             return $this->rules_cache;
         }
@@ -103,7 +103,7 @@ class WCET_Pricing_Engine {
     /**
      * Apply cart-level rules (BOGO, tiered, etc.).
      */
-    public function apply_cart_rules( WC_Cart $cart ): void {
+    public function apply_cart_rules( WC_Cart $cart ) {
         if ( is_admin() && ! wp_doing_ajax() ) {
             return;
         }
@@ -147,7 +147,7 @@ class WCET_Pricing_Engine {
     /**
      * Check if a rule applies to a given product.
      */
-    private function rule_matches_product( array $rule, WC_Product $product ): bool {
+    private function rule_matches_product( array $rule, WC_Product $product ) {
         $conditions = $rule['conditions'];
 
         // Product ID filter.
@@ -188,19 +188,27 @@ class WCET_Pricing_Engine {
         return true;
     }
 
-    private function calculate_discount( float $price, array $rule ): float {
+    private function calculate_discount( float $price, array $rule ) {
         $value = (float) $rule['discount_value'];
 
-        return match ( $rule['type'] ) {
-            'percentage', 'role_based' => $price - ( $price * ( $value / 100 ) ),
-            'fixed'                    => $price - $value,
-            default                    => $price,
-        };
+        switch ( $rule['type'] ) {
+            case 'percentage':
+            case 'role_based':
+                return $price - ( $price * ( $value / 100 ) );
+            case 'fixed':
+                return $price - $value;
+            default:
+                return $price;
+        }
     }
 
-    private function apply_tiered_pricing( float $base_price, int $quantity, array $rule ): float {
+    private function apply_tiered_pricing( float $base_price, int $quantity, array $rule ) {
         $tiers = $rule['conditions']['tiers'] ?? [];
-        usort( $tiers, fn( $a, $b ) => ( $b['min_qty'] ?? 0 ) <=> ( $a['min_qty'] ?? 0 ) );
+        usort( $tiers, function( $a, $b ) {
+            $b_qty = isset( $b['min_qty'] ) ? $b['min_qty'] : 0;
+            $a_qty = isset( $a['min_qty'] ) ? $a['min_qty'] : 0;
+            return $b_qty - $a_qty;
+        } );
 
         foreach ( $tiers as $tier ) {
             if ( $quantity >= ( $tier['min_qty'] ?? 0 ) ) {
@@ -212,7 +220,7 @@ class WCET_Pricing_Engine {
         return $base_price;
     }
 
-    private function apply_bogo( float $base_price, int $quantity, array $rule ): float {
+    private function apply_bogo( float $base_price, int $quantity, array $rule ) {
         $buy  = max( 1, (int) ( $rule['conditions']['buy_qty'] ?? 1 ) );
         $free = max( 1, (int) ( $rule['conditions']['free_qty'] ?? 1 ) );
         $sets = intdiv( $quantity, $buy + $free );
@@ -222,7 +230,7 @@ class WCET_Pricing_Engine {
         return ( $paid_items / $quantity ) * $base_price;
     }
 
-    private function get_cart_quantity_for_product( int $product_id ): int {
+    private function get_cart_quantity_for_product( int $product_id ) {
         if ( ! WC()->cart ) {
             return 0;
         }
@@ -237,7 +245,7 @@ class WCET_Pricing_Engine {
 
     // --- Admin UI ---
 
-    public function register_admin_page(): void {
+    public function register_admin_page() {
         add_submenu_page(
             'woocommerce',
             __( 'Pricing Rules', 'wc-enterprise' ),
@@ -248,7 +256,7 @@ class WCET_Pricing_Engine {
         );
     }
 
-    public function render_admin_page(): void {
+    public function render_admin_page() {
         global $wpdb;
         $rules = $wpdb->get_results(
             "SELECT * FROM {$wpdb->prefix}wcet_pricing_rules ORDER BY priority ASC",
@@ -331,7 +339,7 @@ class WCET_Pricing_Engine {
         <?php
     }
 
-    public function ajax_save_rule(): void {
+    public function ajax_save_rule() {
         check_ajax_referer( 'wcet_pricing_nonce', '_wcet_nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
@@ -353,7 +361,7 @@ class WCET_Pricing_Engine {
         wp_send_json_success();
     }
 
-    public function ajax_delete_rule(): void {
+    public function ajax_delete_rule() {
         check_ajax_referer( 'wcet_pricing_nonce', '_wcet_nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {

@@ -10,11 +10,11 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Search_Engine {
 
-    private static ?self $instance = null;
-    private string $engine;
-    private array $config;
+    private static $instance = null;
+    private $engine;
+    private $config;
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -54,22 +54,25 @@ class WCET_Search_Engine {
     /**
      * Search products using the external engine.
      */
-    public function search( string $query, array $filters = [], int $limit = 20, int $offset = 0 ): array {
+    public function search( string $query, array $filters = [], int $limit = 20, int $offset = 0 ) {
         if ( empty( $query ) ) {
             return [ 'hits' => [], 'total' => 0 ];
         }
 
-        return match ( $this->engine ) {
-            'algolia'     => $this->search_algolia( $query, $filters, $limit, $offset ),
-            'meilisearch' => $this->search_meilisearch( $query, $filters, $limit, $offset ),
-            default       => $this->search_fallback( $query, $limit, $offset ),
-        };
+        switch ( $this->engine ) {
+            case 'algolia':
+                return $this->search_algolia( $query, $filters, $limit, $offset );
+            case 'meilisearch':
+                return $this->search_meilisearch( $query, $filters, $limit, $offset );
+            default:
+                return $this->search_fallback( $query, $limit, $offset );
+        }
     }
 
     /**
      * Intercept WordPress product search to use external engine.
      */
-    public function intercept_product_search( string $search, WP_Query $query ): string {
+    public function intercept_product_search( string $search, WP_Query $query ) {
         if ( ! $query->is_search() || 'product' !== $query->get( 'post_type' ) ) {
             return $search;
         }
@@ -95,7 +98,7 @@ class WCET_Search_Engine {
     /**
      * Index a single product.
      */
-    public function index_product( int $product_id ): void {
+    public function index_product( int $product_id ) {
         $product = wc_get_product( $product_id );
         if ( ! $product || 'publish' !== $product->get_status() ) {
             $this->remove_product( $product_id );
@@ -104,25 +107,31 @@ class WCET_Search_Engine {
 
         $document = $this->build_document( $product );
 
-        match ( $this->engine ) {
-            'algolia'     => $this->algolia_index( $document ),
-            'meilisearch' => $this->meilisearch_index( $document ),
-            default       => null,
-        };
+        switch ( $this->engine ) {
+            case 'algolia':
+                $this->algolia_index( $document );
+                break;
+            case 'meilisearch':
+                $this->meilisearch_index( $document );
+                break;
+        }
     }
 
-    public function remove_product( int $product_id ): void {
-        match ( $this->engine ) {
-            'algolia'     => $this->algolia_remove( $product_id ),
-            'meilisearch' => $this->meilisearch_remove( $product_id ),
-            default       => null,
-        };
+    public function remove_product( int $product_id ) {
+        switch ( $this->engine ) {
+            case 'algolia':
+                $this->algolia_remove( $product_id );
+                break;
+            case 'meilisearch':
+                $this->meilisearch_remove( $product_id );
+                break;
+        }
     }
 
     /**
      * Build a searchable document from a WC_Product.
      */
-    private function build_document( WC_Product $product ): array {
+    private function build_document( WC_Product $product ) {
         $categories = wp_get_post_terms( $product->get_id(), 'product_cat', [ 'fields' => 'names' ] );
         $tags       = wp_get_post_terms( $product->get_id(), 'product_tag', [ 'fields' => 'names' ] );
 
@@ -148,7 +157,7 @@ class WCET_Search_Engine {
 
     // --- Meilisearch ---
 
-    private function search_meilisearch( string $query, array $filters, int $limit, int $offset ): array {
+    private function search_meilisearch( string $query, array $filters, int $limit, int $offset ) {
         $cfg  = $this->config['meilisearch'];
         $body = [
             'q'      => $query,
@@ -180,7 +189,7 @@ class WCET_Search_Engine {
         ];
     }
 
-    private function meilisearch_index( array $document ): void {
+    private function meilisearch_index( array $document ) {
         $cfg = $this->config['meilisearch'];
         wp_remote_post( "{$cfg['host']}/indexes/{$cfg['index']}/documents", [
             'headers' => [
@@ -192,7 +201,7 @@ class WCET_Search_Engine {
         ] );
     }
 
-    private function meilisearch_remove( int $product_id ): void {
+    private function meilisearch_remove( int $product_id ) {
         $cfg = $this->config['meilisearch'];
         wp_remote_request( "{$cfg['host']}/indexes/{$cfg['index']}/documents/{$product_id}", [
             'method'  => 'DELETE',
@@ -201,11 +210,11 @@ class WCET_Search_Engine {
         ] );
     }
 
-    private function build_meili_filter( array $filters ): string {
+    private function build_meili_filter( array $filters ) {
         $parts = [];
         foreach ( $filters as $key => $value ) {
             if ( is_array( $value ) ) {
-                $parts[] = $key . ' IN [' . implode( ', ', array_map( fn( $v ) => '"' . $v . '"', $value ) ) . ']';
+                $parts[] = $key . ' IN [' . implode( ', ', array_map( function( $v ) { return '"' . $v . '"'; }, $value ) ) . ']';
             } else {
                 $parts[] = "$key = \"$value\"";
             }
@@ -215,7 +224,7 @@ class WCET_Search_Engine {
 
     // --- Algolia ---
 
-    private function search_algolia( string $query, array $filters, int $limit, int $offset ): array {
+    private function search_algolia( string $query, array $filters, int $limit, int $offset ) {
         $cfg  = $this->config['algolia'];
         $body = [
             'query'        => $query,
@@ -251,7 +260,7 @@ class WCET_Search_Engine {
         ];
     }
 
-    private function algolia_index( array $document ): void {
+    private function algolia_index( array $document ) {
         $cfg = $this->config['algolia'];
         $document['objectID'] = $document['id'];
         wp_remote_request(
@@ -269,7 +278,7 @@ class WCET_Search_Engine {
         );
     }
 
-    private function algolia_remove( int $product_id ): void {
+    private function algolia_remove( int $product_id ) {
         $cfg = $this->config['algolia'];
         wp_remote_request(
             "https://{$cfg['app_id']}.algolia.net/1/indexes/{$cfg['index']}/{$product_id}",
@@ -284,11 +293,11 @@ class WCET_Search_Engine {
         );
     }
 
-    private function build_algolia_filter( array $filters ): string {
+    private function build_algolia_filter( array $filters ) {
         $parts = [];
         foreach ( $filters as $key => $value ) {
             if ( is_array( $value ) ) {
-                $or_parts = array_map( fn( $v ) => "$key:\"$v\"", $value );
+                $or_parts = array_map( function( $v ) use ( $key ) { return "$key:\"$v\""; }, $value );
                 $parts[]  = '(' . implode( ' OR ', $or_parts ) . ')';
             } else {
                 $parts[] = "$key:\"$value\"";
@@ -299,7 +308,7 @@ class WCET_Search_Engine {
 
     // --- Fallback (MySQL LIKE) ---
 
-    private function search_fallback( string $query, int $limit, int $offset ): array {
+    private function search_fallback( string $query, int $limit, int $offset ) {
         $args = [
             'status'  => 'publish',
             'limit'   => $limit,
@@ -323,7 +332,7 @@ class WCET_Search_Engine {
 
     // --- Admin ---
 
-    public function register_settings_page(): void {
+    public function register_settings_page() {
         add_submenu_page(
             'woocommerce',
             __( 'Search Settings', 'wc-enterprise' ),
@@ -334,7 +343,7 @@ class WCET_Search_Engine {
         );
     }
 
-    public function render_settings_page(): void {
+    public function render_settings_page() {
         if ( isset( $_POST['wcet_search_save'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'wcet_search_settings' ) ) {
             update_option( 'wcet_search_engine', sanitize_text_field( $_POST['engine'] ?? 'meilisearch' ) );
             update_option( 'wcet_meilisearch_host', esc_url_raw( $_POST['meili_host'] ?? '' ) );
@@ -382,7 +391,7 @@ class WCET_Search_Engine {
         <?php
     }
 
-    public function ajax_reindex(): void {
+    public function ajax_reindex() {
         check_ajax_referer( 'wcet_reindex', '_wpnonce' );
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_send_json_error( 'Unauthorized' );

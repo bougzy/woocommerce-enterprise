@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Object_Cache {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
     /** Cache group prefix */
     private const GROUP = 'wcet';
@@ -21,7 +21,7 @@ class WCET_Object_Cache {
     private const TTL_MEDIUM = 1800;   // 30 min
     private const TTL_LONG   = 86400;  // 24 hours
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -67,15 +67,15 @@ class WCET_Object_Cache {
         return wp_cache_get( $key, $group );
     }
 
-    public function set( string $key, $value, int $ttl = self::TTL_MEDIUM, string $group = self::GROUP ): bool {
+    public function set( string $key, $value, int $ttl = self::TTL_MEDIUM, string $group = self::GROUP ) {
         return wp_cache_set( $key, $value, $group, $ttl );
     }
 
-    public function delete( string $key, string $group = self::GROUP ): bool {
+    public function delete( string $key, string $group = self::GROUP ) {
         return wp_cache_delete( $key, $group );
     }
 
-    public function flush_group( string $group = self::GROUP ): void {
+    public function flush_group( string $group = self::GROUP ) {
         if ( function_exists( 'wp_cache_flush_group' ) ) {
             wp_cache_flush_group( $group );
         } else {
@@ -88,7 +88,7 @@ class WCET_Object_Cache {
     /**
      * Get product data with caching.
      */
-    public function get_product_data( int $product_id ): ?array {
+    public function get_product_data( int $product_id ) {
         return $this->remember(
             "product_{$product_id}",
             function () use ( $product_id ) {
@@ -114,7 +114,7 @@ class WCET_Object_Cache {
     /**
      * Cached product count by status.
      */
-    public function get_product_counts(): array {
+    public function get_product_counts() {
         return $this->remember( 'product_counts', function () {
             $counts = wp_count_posts( 'product' );
             return (array) $counts;
@@ -124,7 +124,7 @@ class WCET_Object_Cache {
     /**
      * Cached category tree.
      */
-    public function get_category_tree(): array {
+    public function get_category_tree() {
         return $this->remember( 'category_tree', function () {
             $terms = get_terms( [
                 'taxonomy'   => 'product_cat',
@@ -134,19 +134,21 @@ class WCET_Object_Cache {
             if ( is_wp_error( $terms ) ) {
                 return [];
             }
-            return array_map( fn( $t ) => [
-                'id'     => $t->term_id,
-                'name'   => $t->name,
-                'slug'   => $t->slug,
-                'parent' => $t->parent,
-                'count'  => $t->count,
-            ], $terms );
+            return array_map( function( $t ) {
+                return [
+                    'id'     => $t->term_id,
+                    'name'   => $t->name,
+                    'slug'   => $t->slug,
+                    'parent' => $t->parent,
+                    'count'  => $t->count,
+                ];
+            }, $terms );
         }, self::TTL_LONG );
     }
 
     // --- Invalidation ---
 
-    public function invalidate_product( int $product_id ): void {
+    public function invalidate_product( int $product_id ) {
         $this->delete( "product_{$product_id}" );
         $this->delete( 'product_counts' );
         $this->delete( 'category_tree' );
@@ -154,11 +156,11 @@ class WCET_Object_Cache {
         do_action( 'wcet_cache_invalidated', 'product', $product_id );
     }
 
-    public function invalidate_product_on_stock_change( WC_Product $product ): void {
+    public function invalidate_product_on_stock_change( WC_Product $product ) {
         $this->invalidate_product( $product->get_id() );
     }
 
-    public function invalidate_order_caches( int $order_id = 0 ): void {
+    public function invalidate_order_caches( int $order_id = 0 ) {
         $this->delete( 'dashboard_stats' );
         $this->delete( 'revenue_chart' );
         do_action( 'wcet_cache_invalidated', 'order', $order_id );
@@ -166,7 +168,7 @@ class WCET_Object_Cache {
 
     // --- Cache Warming ---
 
-    public function warm_product_cache(): void {
+    public function warm_product_cache() {
         $product_ids = wc_get_products( [
             'status'  => 'publish',
             'limit'   => 200,
@@ -185,7 +187,7 @@ class WCET_Object_Cache {
 
     // --- HTTP Cache Headers ---
 
-    public function set_cache_headers(): void {
+    public function set_cache_headers() {
         if ( is_user_logged_in() || is_cart() || is_checkout() || is_account_page() ) {
             nocache_headers();
             return;
@@ -200,23 +202,23 @@ class WCET_Object_Cache {
         }
     }
 
-    private function send_cache_header( int $max_age ): void {
+    private function send_cache_header( int $max_age ) {
         header( "Cache-Control: public, max-age={$max_age}, s-maxage=" . ( $max_age * 2 ) );
         header( 'Vary: Accept-Encoding, Cookie' );
     }
 
     // --- Fragment Caching ---
 
-    public function register_fragment_cache(): void {
+    public function register_fragment_cache() {
         add_filter( 'wcet_fragment_cache', [ $this, 'get_fragment' ], 10, 3 );
     }
 
     /**
      * Cache a template fragment.
      *
-     * Usage: echo apply_filters('wcet_fragment_cache', '', 'sidebar_categories', fn() => get_template_part('parts/categories'));
+     * Usage: echo apply_filters('wcet_fragment_cache', '', 'sidebar_categories', function() { return get_template_part('parts/categories'); });
      */
-    public function get_fragment( string $output, string $key, ?callable $render = null ): string {
+    public function get_fragment( string $output, string $key, ?callable $render = null ) {
         $cached = $this->get( "fragment_{$key}" );
         if ( false !== $cached ) {
             return $cached;
@@ -234,7 +236,7 @@ class WCET_Object_Cache {
 
     // --- Diagnostics ---
 
-    public function get_cache_stats(): array {
+    public function get_cache_stats() {
         global $wp_object_cache;
 
         $stats = [
@@ -251,7 +253,7 @@ class WCET_Object_Cache {
         return $stats;
     }
 
-    private function detect_cache_backend(): string {
+    private function detect_cache_backend() {
         if ( class_exists( 'Redis' ) && wp_using_ext_object_cache() ) {
             return 'Redis';
         }

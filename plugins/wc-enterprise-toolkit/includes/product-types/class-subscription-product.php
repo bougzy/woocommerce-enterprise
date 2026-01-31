@@ -10,27 +10,27 @@ class WCET_Subscription_Product extends WC_Product {
 
     protected $product_type = 'subscription';
 
-    public function get_type(): string {
+    public function get_type() {
         return 'subscription';
     }
 
-    public function get_billing_period(): string {
+    public function get_billing_period() {
         return $this->get_meta( '_billing_period', true ) ?: 'month';
     }
 
-    public function get_billing_interval(): int {
+    public function get_billing_interval() {
         return max( 1, (int) $this->get_meta( '_billing_interval', true ) );
     }
 
-    public function get_trial_days(): int {
+    public function get_trial_days() {
         return max( 0, (int) $this->get_meta( '_trial_days', true ) );
     }
 
-    public function get_signup_fee(): float {
+    public function get_signup_fee() {
         return max( 0.0, (float) $this->get_meta( '_signup_fee', true ) );
     }
 
-    public function get_max_renewals(): int {
+    public function get_max_renewals() {
         $max = $this->get_meta( '_max_renewals', true );
         return '' === $max ? 0 : max( 0, (int) $max ); // 0 = unlimited
     }
@@ -38,7 +38,7 @@ class WCET_Subscription_Product extends WC_Product {
     /**
      * Calculate the total cost for first payment (signup fee + first period).
      */
-    public function get_first_payment_amount(): float {
+    public function get_first_payment_amount() {
         $price = (float) $this->get_price();
         if ( $this->get_trial_days() > 0 ) {
             return $this->get_signup_fee(); // Only signup fee during trial.
@@ -46,11 +46,11 @@ class WCET_Subscription_Product extends WC_Product {
         return round( $price + $this->get_signup_fee(), wc_get_price_decimals() );
     }
 
-    public function get_recurring_amount(): float {
+    public function get_recurring_amount() {
         return round( (float) $this->get_price(), wc_get_price_decimals() );
     }
 
-    public function get_price_string(): string {
+    public function get_price_string() {
         $price    = wc_price( $this->get_recurring_amount() );
         $interval = $this->get_billing_interval();
         $period   = $this->get_billing_period();
@@ -71,12 +71,12 @@ class WCET_Subscription_Product extends WC_Product {
 }
 
 // Register product type.
-add_filter( 'product_type_selector', function ( array $types ): array {
+add_filter( 'product_type_selector', function ( array $types ) {
     $types['subscription'] = __( 'Subscription Product', 'wc-enterprise' );
     return $types;
 } );
 
-add_filter( 'woocommerce_product_class', function ( string $class, string $type ): string {
+add_filter( 'woocommerce_product_class', function ( string $class, string $type ) {
     if ( 'subscription' === $type ) {
         return 'WCET_Subscription_Product';
     }

@@ -11,12 +11,12 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Order_Workflow {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
     /** @var array<string, array{label: string, label_count: string, next: string[], color: string}> */
-    private array $custom_statuses = [];
+    private $custom_statuses = [];
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -43,7 +43,7 @@ class WCET_Order_Workflow {
         }
     }
 
-    private function define_statuses(): void {
+    private function define_statuses() {
         $this->custom_statuses = [
             'wc-awaiting-verify' => [
                 'label'       => _x( 'Awaiting Verification', 'Order status', 'wc-enterprise' ),
@@ -84,7 +84,7 @@ class WCET_Order_Workflow {
         ];
     }
 
-    public function register_statuses(): void {
+    public function register_statuses() {
         foreach ( $this->custom_statuses as $slug => $status ) {
             register_post_status( $slug, [
                 'label'                     => $status['label'],
@@ -97,7 +97,7 @@ class WCET_Order_Workflow {
         }
     }
 
-    public function add_statuses_to_wc( array $statuses ): array {
+    public function add_statuses_to_wc( array $statuses ) {
         $new = [];
         foreach ( $statuses as $key => $label ) {
             $new[ $key ] = $label;
@@ -111,12 +111,12 @@ class WCET_Order_Workflow {
         return $new;
     }
 
-    public function valid_payment_statuses( array $statuses ): array {
+    public function valid_payment_statuses( array $statuses ) {
         $statuses[] = 'awaiting-verify';
         return $statuses;
     }
 
-    public function valid_cancel_statuses( array $statuses ): array {
+    public function valid_cancel_statuses( array $statuses ) {
         $statuses[] = 'awaiting-verify';
         $statuses[] = 'preparing';
         return $statuses;
@@ -125,7 +125,7 @@ class WCET_Order_Workflow {
     /**
      * Handle status transitions — send notifications, log events, trigger next steps.
      */
-    public function on_status_change( int $order_id, string $from, string $to, WC_Order $order ): void {
+    public function on_status_change( int $order_id, string $from, string $to, WC_Order $order ) {
         // Log transition for the order lifecycle timeline.
         $order->add_order_note(
             sprintf(
@@ -160,12 +160,12 @@ class WCET_Order_Workflow {
         ] );
     }
 
-    private function is_payment_verified( WC_Order $order ): bool {
+    private function is_payment_verified( WC_Order $order ) {
         return in_array( $order->get_payment_method(), [ 'stripe', 'paystack' ], true )
             && $order->get_transaction_id();
     }
 
-    public function add_bulk_actions( array $actions ): array {
+    public function add_bulk_actions( array $actions ) {
         foreach ( $this->custom_statuses as $slug => $status ) {
             $key             = 'mark_' . str_replace( 'wc-', '', $slug );
             $actions[ $key ] = sprintf( __( 'Change status to %s', 'wc-enterprise' ), $status['label'] );
@@ -173,7 +173,7 @@ class WCET_Order_Workflow {
         return $actions;
     }
 
-    public function admin_status_colors(): void {
+    public function admin_status_colors() {
         $screen = get_current_screen();
         if ( ! $screen || 'edit-shop_order' !== $screen->id ) {
             return;
@@ -193,13 +193,13 @@ class WCET_Order_Workflow {
     /**
      * Process automatic order transitions based on age / conditions.
      */
-    public function process_auto_transitions(): void {
+    public function process_auto_transitions() {
         $rules = apply_filters( 'wcet_auto_transition_rules', [
             [
                 'from'      => 'quality-check',
                 'to'        => 'ready-to-ship',
                 'after_hours' => 2,
-                'condition' => fn( WC_Order $o ) => ! $o->get_meta( '_requires_manual_qc' ),
+                'condition' => function( $o ) { return ! $o->get_meta( '_requires_manual_qc' ); },
             ],
         ] );
 
@@ -225,7 +225,7 @@ class WCET_Order_Workflow {
     /**
      * Get allowed next statuses for a given order (used by the admin UI and API).
      */
-    public function get_allowed_transitions( WC_Order $order ): array {
+    public function get_allowed_transitions( WC_Order $order ) {
         $current = 'wc-' . $order->get_status();
         return $this->custom_statuses[ $current ]['next'] ?? [];
     }

@@ -22,7 +22,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Admin page slug.
@@ -98,7 +98,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -153,7 +153,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function on_activation(): void {
+	public function on_activation() {
 		$this->create_custom_roles();
 		$this->add_caps_to_admin();
 
@@ -168,7 +168,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function on_deactivation(): void {
+	public function on_deactivation() {
 		$preserve = get_option( self::PRESERVE_OPTION, '1' );
 
 		if ( '1' === $preserve ) {
@@ -188,7 +188,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	private function create_custom_roles(): void {
+	private function create_custom_roles() {
 		foreach ( self::CUSTOM_ROLES as $slug => $definition ) {
 			$caps = $this->get_role_caps( $slug, $definition['capabilities'] );
 
@@ -208,7 +208,7 @@ final class WCET_Capability_Manager {
 	 * @param string[] $extra_caps    Plugin-specific capabilities.
 	 * @return array<string,bool>
 	 */
-	private function get_role_caps( string $slug, array $extra_caps ): array {
+	private function get_role_caps( string $slug, array $extra_caps ) {
 		$caps = array();
 
 		if ( 'store_manager' === $slug ) {
@@ -231,7 +231,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return string[]
 	 */
-	private function get_woocommerce_capabilities(): array {
+	private function get_woocommerce_capabilities() {
 		$capabilities = array(
 			// General.
 			'read',
@@ -297,7 +297,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	private function add_caps_to_admin(): void {
+	private function add_caps_to_admin() {
 		$admin = get_role( 'administrator' );
 		if ( ! $admin ) {
 			return;
@@ -313,7 +313,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	private function remove_custom_roles(): void {
+	private function remove_custom_roles() {
 		foreach ( array_keys( self::CUSTOM_ROLES ) as $slug ) {
 			remove_role( $slug );
 		}
@@ -324,7 +324,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	private function remove_custom_caps_from_all_roles(): void {
+	private function remove_custom_caps_from_all_roles() {
 		global $wp_roles;
 
 		if ( ! isset( $wp_roles ) ) {
@@ -349,7 +349,7 @@ final class WCET_Capability_Manager {
 	 * @param string[] $capabilities Capabilities to add.
 	 * @return bool True if role exists and caps were added, false otherwise.
 	 */
-	public function add_caps_to_role( string $role_slug, array $capabilities ): bool {
+	public function add_caps_to_role( string $role_slug, array $capabilities ) {
 		$role = get_role( $role_slug );
 		if ( ! $role ) {
 			return false;
@@ -372,7 +372,7 @@ final class WCET_Capability_Manager {
 	 * @param string[] $capabilities Capabilities to remove.
 	 * @return bool True if role exists, false otherwise.
 	 */
-	public function remove_caps_from_role( string $role_slug, array $capabilities ): bool {
+	public function remove_caps_from_role( string $role_slug, array $capabilities ) {
 		$role = get_role( $role_slug );
 		if ( ! $role ) {
 			return false;
@@ -395,7 +395,7 @@ final class WCET_Capability_Manager {
 	 * @param int|null $user_id     Optional user ID. Defaults to current user.
 	 * @return bool
 	 */
-	public static function user_has_capability( string $capability, ?int $user_id = null ): bool {
+	public static function user_has_capability( string $capability, ?int $user_id = null ) {
 		if ( ! in_array( $capability, self::CUSTOM_CAPABILITIES, true ) ) {
 			return false;
 		}
@@ -421,7 +421,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return string[]
 	 */
-	public static function get_custom_capabilities(): array {
+	public static function get_custom_capabilities() {
 		return self::CUSTOM_CAPABILITIES;
 	}
 
@@ -430,7 +430,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return array<string,array{name:string,capabilities:string[]}>
 	 */
-	public static function get_custom_role_definitions(): array {
+	public static function get_custom_role_definitions() {
 		return self::CUSTOM_ROLES;
 	}
 
@@ -445,7 +445,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function filter_admin_menu(): void {
+	public function filter_admin_menu() {
 		// Map plugin page slugs to required capabilities.
 		$menu_capability_map = array(
 			'wcet-pricing'      => 'wcet_manage_pricing',
@@ -482,7 +482,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function register_admin_page(): void {
+	public function register_admin_page() {
 		add_submenu_page(
 			'woocommerce',
 			__( 'Roles & Capabilities', 'wc-enterprise' ),
@@ -498,7 +498,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function register_settings(): void {
+	public function register_settings() {
 		register_setting(
 			'wcet_capabilities_group',
 			self::PRESERVE_OPTION,
@@ -518,7 +518,7 @@ final class WCET_Capability_Manager {
 	 * @param string $hook_suffix Current admin page hook suffix.
 	 * @return void
 	 */
-	public function enqueue_admin_assets( string $hook_suffix ): void {
+	public function enqueue_admin_assets( string $hook_suffix ) {
 		if ( 'woocommerce_page_' . self::ADMIN_SLUG !== $hook_suffix ) {
 			return;
 		}
@@ -536,7 +536,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	public function render_admin_page(): void {
+	public function render_admin_page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wc-enterprise' ) );
 		}
@@ -688,7 +688,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return void
 	 */
-	private function handle_admin_form_submission(): void {
+	private function handle_admin_form_submission() {
 		// Recreate roles.
 		if (
 			isset( $_POST['wcet_recreate_roles'] ) &&
@@ -753,7 +753,7 @@ final class WCET_Capability_Manager {
 	 *
 	 * @return array<string,array{name:string,capabilities:array<string,bool>}>
 	 */
-	private function get_all_roles_with_custom_caps(): array {
+	private function get_all_roles_with_custom_caps() {
 		global $wp_roles;
 
 		if ( ! isset( $wp_roles ) ) {

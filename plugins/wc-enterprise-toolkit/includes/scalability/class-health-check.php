@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Health_Check {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -36,7 +36,7 @@ class WCET_Health_Check {
     /**
      * Register /wcet/v1/health endpoint (unauthenticated for load balancer probes).
      */
-    public function register_health_endpoint(): void {
+    public function register_health_endpoint() {
         register_rest_route( 'wcet/v1', '/health', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'health_endpoint' ],
@@ -55,15 +55,21 @@ class WCET_Health_Check {
     /**
      * Simple health probe — returns 200 if the system is operational.
      */
-    public function health_endpoint(): WP_REST_Response {
+    public function health_endpoint() {
         $status = $this->get_overall_status();
 
-        $code = match ( $status ) {
-            'healthy'  => 200,
-            'degraded' => 200, // Still serve traffic.
-            'unhealthy' => 503,
-            default     => 500,
-        };
+        switch ( $status ) {
+            case 'healthy':
+            case 'degraded':
+                $code = 200;
+                break;
+            case 'unhealthy':
+                $code = 503;
+                break;
+            default:
+                $code = 500;
+                break;
+        }
 
         return new WP_REST_Response( [
             'status'    => $status,
@@ -75,7 +81,7 @@ class WCET_Health_Check {
     /**
      * Detailed health check (authenticated).
      */
-    public function detailed_health_endpoint(): WP_REST_Response {
+    public function detailed_health_endpoint() {
         $checks = $this->run_all_checks();
 
         return new WP_REST_Response( [
@@ -90,7 +96,7 @@ class WCET_Health_Check {
     /**
      * Run all health checks.
      */
-    public function run_all_checks(): array {
+    public function run_all_checks() {
         return [
             'database'      => $this->check_database(),
             'object_cache'  => $this->check_object_cache(),
@@ -103,7 +109,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_database(): array {
+    private function check_database() {
         global $wpdb;
         $start  = microtime( true );
         $result = $wpdb->get_var( 'SELECT 1' );
@@ -116,7 +122,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_object_cache(): array {
+    private function check_object_cache() {
         $test_key   = 'wcet_health_' . time();
         $test_value = wp_generate_password( 12, false );
 
@@ -131,7 +137,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_woocommerce(): array {
+    private function check_woocommerce() {
         $active = class_exists( 'WooCommerce' );
         $version = $active ? WC()->version : 'N/A';
 
@@ -142,7 +148,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_disk_space(): array {
+    private function check_disk_space() {
         $free  = @disk_free_space( ABSPATH );
         $total = @disk_total_space( ABSPATH );
 
@@ -161,7 +167,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_memory(): array {
+    private function check_memory() {
         $limit   = ini_get( 'memory_limit' );
         $used    = memory_get_usage( true );
         $peak    = memory_get_peak_usage( true );
@@ -179,7 +185,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_cron(): array {
+    private function check_cron() {
         $next_scheduled = wp_next_scheduled( 'wcet_process_job_queue' );
         $overdue        = $next_scheduled && $next_scheduled < ( time() - 300 );
 
@@ -191,7 +197,7 @@ class WCET_Health_Check {
         ];
     }
 
-    private function check_search_engine(): array {
+    private function check_search_engine() {
         $engine = get_option( 'wcet_search_engine', 'default' );
 
         if ( 'default' === $engine ) {
@@ -216,18 +222,18 @@ class WCET_Health_Check {
         return [ 'status' => 'pass', 'engine' => $engine ];
     }
 
-    private function check_ssl(): array {
+    private function check_ssl() {
         return [
             'status'    => is_ssl() ? 'pass' : 'warn',
             'is_ssl'    => is_ssl(),
-            'site_url'  => str_starts_with( get_site_url(), 'https' ),
+            'site_url'  => strpos( get_site_url(), 'https' ) === 0,
         ];
     }
 
     /**
      * Determine overall system status.
      */
-    public function get_overall_status(): string {
+    public function get_overall_status() {
         $checks   = $this->run_all_checks();
         $statuses = array_column( $checks, 'status' );
 
@@ -240,7 +246,7 @@ class WCET_Health_Check {
         return 'healthy';
     }
 
-    private function get_system_info(): array {
+    private function get_system_info() {
         return [
             'php_version'  => PHP_VERSION,
             'wp_version'   => get_bloginfo( 'version' ),
@@ -255,7 +261,7 @@ class WCET_Health_Check {
     /**
      * Run health checks and store results (called by cron).
      */
-    public function run_health_checks(): void {
+    public function run_health_checks() {
         $checks = $this->run_all_checks();
         $status = $this->get_overall_status();
 
@@ -269,7 +275,7 @@ class WCET_Health_Check {
         // Alert if unhealthy.
         if ( 'unhealthy' === $status ) {
             $admin_email = get_option( 'admin_email' );
-            $failed      = array_filter( $checks, fn( $c ) => ( $c['status'] ?? '' ) === 'fail' );
+            $failed      = array_filter( $checks, function( $c ) { return ( isset( $c['status'] ) ? $c['status'] : '' ) === 'fail'; } );
 
             wp_mail(
                 $admin_email,
@@ -285,7 +291,7 @@ class WCET_Health_Check {
     /**
      * Admin bar health indicator.
      */
-    public function admin_bar_health( WP_Admin_Bar $admin_bar ): void {
+    public function admin_bar_health( WP_Admin_Bar $admin_bar ) {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             return;
         }

@@ -10,7 +10,7 @@ class WCET_Bundle_Product extends WC_Product {
 
     protected $product_type = 'bundle';
 
-    public function get_type(): string {
+    public function get_type() {
         return 'bundle';
     }
 
@@ -18,23 +18,23 @@ class WCET_Bundle_Product extends WC_Product {
      * Get bundled product IDs with quantities.
      * Stored as meta: [ ['product_id' => 123, 'quantity' => 2, 'optional' => false], ... ]
      */
-    public function get_bundled_items(): array {
+    public function get_bundled_items() {
         $items = $this->get_meta( '_bundle_items', true );
         return is_array( $items ) ? $items : [];
     }
 
-    public function set_bundled_items( array $items ): void {
+    public function set_bundled_items( array $items ) {
         $this->update_meta_data( '_bundle_items', $items );
     }
 
-    public function get_bundle_discount(): float {
+    public function get_bundle_discount() {
         return (float) $this->get_meta( '_bundle_discount', true );
     }
 
     /**
      * Calculate the bundle price from component products.
      */
-    public function calculate_bundle_price(): float {
+    public function calculate_bundle_price() {
         $total    = 0.0;
         $items    = $this->get_bundled_items();
         $discount = $this->get_bundle_discount();
@@ -55,7 +55,7 @@ class WCET_Bundle_Product extends WC_Product {
         return round( $total, wc_get_price_decimals() );
     }
 
-    public function is_purchasable(): bool {
+    public function is_purchasable() {
         foreach ( $this->get_bundled_items() as $item ) {
             $product = wc_get_product( $item['product_id'] ?? 0 );
             if ( ! $product || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
@@ -67,12 +67,12 @@ class WCET_Bundle_Product extends WC_Product {
 }
 
 // Register the product type.
-add_filter( 'product_type_selector', function ( array $types ): array {
+add_filter( 'product_type_selector', function ( array $types ) {
     $types['bundle'] = __( 'Bundle Product', 'wc-enterprise' );
     return $types;
 } );
 
-add_filter( 'woocommerce_product_class', function ( string $class, string $type ): string {
+add_filter( 'woocommerce_product_class', function ( string $class, string $type ) {
     if ( 'bundle' === $type ) {
         return 'WCET_Bundle_Product';
     }

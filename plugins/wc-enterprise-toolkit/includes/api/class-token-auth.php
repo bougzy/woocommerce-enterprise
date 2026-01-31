@@ -22,7 +22,7 @@ class WCET_Token_Auth {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Token prefix.
@@ -57,14 +57,14 @@ class WCET_Token_Auth {
 	 *
 	 * @var array|null
 	 */
-	private ?array $current_token = null;
+	private $current_token = null;
 
 	/**
 	 * Get singleton instance.
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -97,7 +97,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return void
 	 */
-	public function maybe_create_table(): void {
+	public function maybe_create_table() {
 		$db_version_key = 'wcet_api_tokens_db_version';
 		$current_version = '1.0.0';
 
@@ -234,7 +234,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return string|null The token string, or null if not present.
 	 */
-	private function extract_bearer_token(): ?string {
+	private function extract_bearer_token() {
 		$auth_header = null;
 
 		// Check for the standard Authorization header.
@@ -272,10 +272,10 @@ class WCET_Token_Auth {
 	 * @param string $token The token string.
 	 * @return bool
 	 */
-	private function is_valid_token_format( string $token ): bool {
+	private function is_valid_token_format( string $token ) {
 		$expected_length = strlen( self::TOKEN_PREFIX ) + self::TOKEN_LENGTH;
 		return strlen( $token ) === $expected_length
-			&& str_starts_with( $token, self::TOKEN_PREFIX )
+			&& strpos( $token, self::TOKEN_PREFIX ) === 0
 			&& ctype_xdigit( substr( $token, strlen( self::TOKEN_PREFIX ) ) );
 	}
 
@@ -285,7 +285,7 @@ class WCET_Token_Auth {
 	 * @param string $token The plaintext token.
 	 * @return array|null The token record, or null if not found.
 	 */
-	private function find_token( string $token ): ?array {
+	private function find_token( string $token ) {
 		global $wpdb;
 
 		$hash   = hash( 'sha256', $token );
@@ -309,7 +309,7 @@ class WCET_Token_Auth {
 	 * @param int $token_id The token record ID.
 	 * @return void
 	 */
-	private function update_last_used( int $token_id ): void {
+	private function update_last_used( int $token_id ) {
 		global $wpdb;
 
 		$ip = $this->get_client_ip();
@@ -336,7 +336,7 @@ class WCET_Token_Auth {
 	 * @param string $expires_at  Optional expiry datetime (Y-m-d H:i:s).
 	 * @return array{token: string, id: int}|WP_Error
 	 */
-	public function generate_token( int $user_id, string $label, string $permissions = 'read', string $expires_at = '' ): array|WP_Error {
+	public function generate_token( int $user_id, string $label, string $permissions = 'read', string $expires_at = '' ) {
 		// Validate user exists.
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
@@ -408,7 +408,7 @@ class WCET_Token_Auth {
 	 * @param int $token_id The token record ID.
 	 * @return bool True on success.
 	 */
-	public function revoke_token( int $token_id ): bool {
+	public function revoke_token( int $token_id ) {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -437,7 +437,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return array|null
 	 */
-	public function get_current_token(): ?array {
+	public function get_current_token() {
 		return $this->current_token;
 	}
 
@@ -449,7 +449,7 @@ class WCET_Token_Auth {
 	 * @param string $required_permission The required permission level.
 	 * @return bool
 	 */
-	public function current_token_can( string $required_permission ): bool {
+	public function current_token_can( string $required_permission ) {
 		if ( null === $this->current_token ) {
 			return false;
 		}
@@ -471,7 +471,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return string
 	 */
-	private function get_client_ip(): string {
+	private function get_client_ip() {
 		$headers = [
 			'HTTP_CF_CONNECTING_IP',  // Cloudflare.
 			'HTTP_X_FORWARDED_FOR',
@@ -483,7 +483,7 @@ class WCET_Token_Auth {
 			if ( ! empty( $_SERVER[ $header ] ) ) {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
 				// X-Forwarded-For may contain multiple IPs; take the first.
-				if ( str_contains( $ip, ',' ) ) {
+				if ( strpos( $ip, ',' ) !== false ) {
 					$ip = trim( explode( ',', $ip )[0] );
 				}
 				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
@@ -504,7 +504,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return void
 	 */
-	public function register_admin_page(): void {
+	public function register_admin_page() {
 		add_submenu_page(
 			'woocommerce',
 			__( 'API Tokens', 'wc-enterprise' ),
@@ -520,7 +520,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return void
 	 */
-	public function render_admin_page(): void {
+	public function render_admin_page() {
 		global $wpdb;
 
 		$table  = $wpdb->prefix . self::TABLE_NAME;
@@ -788,7 +788,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return void
 	 */
-	public function ajax_generate_token(): void {
+	public function ajax_generate_token() {
 		check_ajax_referer( 'wcet_token_management', '_wcet_token_nonce' );
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
@@ -834,7 +834,7 @@ class WCET_Token_Auth {
 	 *
 	 * @return void
 	 */
-	public function ajax_revoke_token(): void {
+	public function ajax_revoke_token() {
 		check_ajax_referer( 'wcet_token_management', '_wcet_token_nonce' );
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {

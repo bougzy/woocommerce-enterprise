@@ -18,21 +18,21 @@ class WCET_Fraud_Prevention {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * WC Logger instance.
 	 *
 	 * @var WC_Logger|null
 	 */
-	private ?WC_Logger $logger = null;
+	private $logger = null;
 
 	/**
 	 * Default risk thresholds.
 	 *
 	 * @var array{review: int, block: int}
 	 */
-	private array $thresholds = [
+	private $thresholds = [
 		'review' => 30,
 		'block'  => 60,
 	];
@@ -42,7 +42,7 @@ class WCET_Fraud_Prevention {
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -83,7 +83,7 @@ class WCET_Fraud_Prevention {
 	 * @param array    $posted_data Posted checkout data.
 	 * @param WC_Order $order       WooCommerce order object.
 	 */
-	public function evaluate_order( int $order_id, array $posted_data, WC_Order $order ): void {
+	public function evaluate_order( int $order_id, array $posted_data, WC_Order $order ) {
 		$risk_factors = [];
 		$total_score  = 0;
 
@@ -197,7 +197,7 @@ class WCET_Fraud_Prevention {
 	 * @param int $score Risk score (0-100).
 	 * @return string One of 'allow', 'review', 'block'.
 	 */
-	private function determine_action( int $score ): string {
+	private function determine_action( int $score ) {
 		if ( $score >= $this->thresholds['block'] ) {
 			return 'block';
 		}
@@ -217,7 +217,7 @@ class WCET_Fraud_Prevention {
 	 * @param int      $score        Risk score.
 	 * @param array    $risk_factors Array of risk factor details.
 	 */
-	private function apply_action( WC_Order $order, string $action, int $score, array $risk_factors ): void {
+	private function apply_action( WC_Order $order, string $action, int $score, array $risk_factors ) {
 		switch ( $action ) {
 			case 'review':
 				$order->update_status( 'awaiting-verify',
@@ -264,7 +264,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-25).
 	 */
-	private function check_ip_geolocation_mismatch( WC_Order $order ): int {
+	private function check_ip_geolocation_mismatch( WC_Order $order ) {
 		$billing_country = $order->get_billing_country();
 		$ip_address      = $order->get_customer_ip_address();
 
@@ -298,7 +298,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-25).
 	 */
-	private function check_velocity( WC_Order $order ): int {
+	private function check_velocity( WC_Order $order ) {
 		global $wpdb;
 
 		$score      = 0;
@@ -347,7 +347,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-20).
 	 */
-	private function check_email_domain( WC_Order $order ): int {
+	private function check_email_domain( WC_Order $order ) {
 		$email = strtolower( $order->get_billing_email() );
 
 		if ( empty( $email ) || ! is_email( $email ) ) {
@@ -390,7 +390,7 @@ class WCET_Fraud_Prevention {
 		] );
 
 		foreach ( $risky_tlds as $tld ) {
-			if ( str_ends_with( $domain, $tld ) ) {
+			if ( substr( $domain, -strlen( $tld ) ) === $tld ) {
 				return 10;
 			}
 		}
@@ -409,7 +409,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-15).
 	 */
-	private function check_amount_anomaly( WC_Order $order ): int {
+	private function check_amount_anomaly( WC_Order $order ) {
 		global $wpdb;
 
 		$order_total = (float) $order->get_total();
@@ -459,7 +459,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-15).
 	 */
-	private function check_bin_country_mismatch( WC_Order $order ): int {
+	private function check_bin_country_mismatch( WC_Order $order ) {
 		$billing_country = strtoupper( $order->get_billing_country() );
 		$card_country    = strtoupper( $order->get_meta( '_wcet_card_country' ) );
 
@@ -480,7 +480,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-20).
 	 */
-	private function check_new_customer_high_value( WC_Order $order ): int {
+	private function check_new_customer_high_value( WC_Order $order ) {
 		$customer_id = $order->get_customer_id();
 		$order_total = (float) $order->get_total();
 
@@ -542,7 +542,7 @@ class WCET_Fraud_Prevention {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return int Risk score contribution (0-15).
 	 */
-	private function check_ip_reputation( WC_Order $order ): int {
+	private function check_ip_reputation( WC_Order $order ) {
 		$ip_address = $order->get_customer_ip_address();
 
 		if ( empty( $ip_address ) ) {
@@ -578,7 +578,7 @@ class WCET_Fraud_Prevention {
 			] );
 
 			foreach ( $suspicious_patterns as $pattern ) {
-				if ( str_contains( $hostname_lower, $pattern ) ) {
+				if ( strpos( $hostname_lower, $pattern ) !== false ) {
 					return 12;
 				}
 			}
@@ -599,7 +599,7 @@ class WCET_Fraud_Prevention {
 	 * @param string $ip_address IP address to check.
 	 * @return int Risk score contribution (0-15).
 	 */
-	private function check_external_ip_reputation( string $ip_address ): int {
+	private function check_external_ip_reputation( string $ip_address ) {
 		$api_key = get_option( 'wcet_fraud_ip_api_key', '' );
 
 		if ( empty( $api_key ) ) {
@@ -662,8 +662,8 @@ class WCET_Fraud_Prevention {
 	 * @param string $range CIDR range (e.g. "192.168.1.0/24").
 	 * @return bool
 	 */
-	private function ip_in_range( string $ip, string $range ): bool {
-		if ( ! str_contains( $range, '/' ) ) {
+	private function ip_in_range( string $ip, string $range ) {
+		if ( strpos( $range, '/' ) === false ) {
 			return $ip === $range;
 		}
 
@@ -694,7 +694,7 @@ class WCET_Fraud_Prevention {
 	 * @param array  $risk_factors Array of risk factor details.
 	 * @param string $action       Action taken (allow, review, block).
 	 */
-	private function log_fraud_assessment( int $order_id, int $risk_score, array $risk_factors, string $action ): void {
+	private function log_fraud_assessment( int $order_id, int $risk_score, array $risk_factors, string $action ) {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -720,7 +720,7 @@ class WCET_Fraud_Prevention {
 	 *
 	 * @param WC_Order $order WooCommerce order.
 	 */
-	public function display_fraud_assessment( WC_Order $order ): void {
+	public function display_fraud_assessment( WC_Order $order ) {
 		$score  = (int) $order->get_meta( '_wcet_fraud_score' );
 		$action = $order->get_meta( '_wcet_fraud_action' );
 
@@ -750,7 +750,7 @@ class WCET_Fraud_Prevention {
 	/**
 	 * Register the fraud details meta box on the order edit screen.
 	 */
-	public function add_fraud_meta_box(): void {
+	public function add_fraud_meta_box() {
 		$screen = wc_get_container()->get( \Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
 			? wc_get_page_screen_id( 'shop-order' )
 			: 'shop_order';
@@ -770,7 +770,7 @@ class WCET_Fraud_Prevention {
 	 *
 	 * @param WP_Post|WC_Order $post_or_order Post object or order object (HPOS).
 	 */
-	public function render_fraud_meta_box( $post_or_order ): void {
+	public function render_fraud_meta_box( $post_or_order ) {
 		$order = $post_or_order instanceof WC_Order ? $post_or_order : wc_get_order( $post_or_order->ID );
 
 		if ( ! $order ) {
@@ -856,7 +856,7 @@ class WCET_Fraud_Prevention {
 	 * @param array $tabs Existing WooCommerce settings tabs.
 	 * @return array
 	 */
-	public function add_settings_tab( array $tabs ): array {
+	public function add_settings_tab( array $tabs ) {
 		$tabs['wcet_fraud'] = __( 'Fraud Prevention', 'wc-enterprise' );
 		return $tabs;
 	}
@@ -864,14 +864,14 @@ class WCET_Fraud_Prevention {
 	/**
 	 * Render the settings page.
 	 */
-	public function render_settings_page(): void {
+	public function render_settings_page() {
 		woocommerce_admin_fields( $this->get_settings() );
 	}
 
 	/**
 	 * Save the settings.
 	 */
-	public function save_settings(): void {
+	public function save_settings() {
 		woocommerce_update_options( $this->get_settings() );
 
 		// Reload thresholds.
@@ -884,7 +884,7 @@ class WCET_Fraud_Prevention {
 	 *
 	 * @return array WooCommerce settings field definitions.
 	 */
-	private function get_settings(): array {
+	private function get_settings() {
 		return [
 			[
 				'title' => __( 'Fraud Prevention Settings', 'wc-enterprise' ),
@@ -970,7 +970,7 @@ class WCET_Fraud_Prevention {
 	 * @param string $message Log message.
 	 * @param array  $context Additional context data.
 	 */
-	private function log( string $level, string $message, array $context = [] ): void {
+	private function log( string $level, string $message, array $context = [] ) {
 		if ( 'yes' !== get_option( 'wcet_fraud_logging', 'no' ) ) {
 			return;
 		}

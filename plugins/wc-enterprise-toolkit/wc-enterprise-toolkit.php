@@ -9,7 +9,7 @@
  * Text Domain: wc-enterprise
  * Domain Path: /languages
  * Requires at least: 6.0
- * Requires PHP: 8.0
+ * Requires PHP: 7.1
  * WC requires at least: 7.0
  * WC tested up to: 8.5
  * License: GPLv2 or later
@@ -27,9 +27,11 @@ define( 'WCET_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
  */
 final class WC_Enterprise_Toolkit {
 
-    private static ?self $instance = null;
+    /** @var self|null */
+    private static $instance = null;
 
-    public static function instance(): self {
+    /** @return self */
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -37,20 +39,27 @@ final class WC_Enterprise_Toolkit {
     }
 
     private function __construct() {
-        $this->check_dependencies();
+        if ( ! $this->check_dependencies() ) {
+            return; // Stop — WooCommerce is not active.
+        }
         $this->includes();
         $this->init_hooks();
     }
 
-    private function check_dependencies(): void {
+    /**
+     * @return bool True if all dependencies are met.
+     */
+    private function check_dependencies() {
         if ( ! class_exists( 'WooCommerce' ) ) {
             add_action( 'admin_notices', function () {
-                echo '<div class="error"><p><strong>WC Enterprise Toolkit</strong> requires WooCommerce 7.0+.</p></div>';
+                echo '<div class="error"><p><strong>WC Enterprise Toolkit</strong> requires WooCommerce 7.0+ to be installed and activated.</p></div>';
             } );
+            return false;
         }
+        return true;
     }
 
-    private function includes(): void {
+    private function includes() {
         // Core modules.
         require_once WCET_PLUGIN_DIR . 'includes/product-types/class-bundle-product.php';
         require_once WCET_PLUGIN_DIR . 'includes/product-types/class-subscription-product.php';
@@ -93,37 +102,37 @@ final class WC_Enterprise_Toolkit {
         require_once WCET_PLUGIN_DIR . 'includes/scalability/class-health-check.php';
     }
 
-    private function init_hooks(): void {
+    private function init_hooks() {
         add_action( 'init', [ $this, 'load_textdomain' ] );
         add_action( 'before_woocommerce_init', [ $this, 'declare_hpos_compatibility' ] );
         register_activation_hook( __FILE__, [ $this, 'activate' ] );
         register_deactivation_hook( __FILE__, [ $this, 'deactivate' ] );
     }
 
-    public function load_textdomain(): void {
+    public function load_textdomain() {
         load_plugin_textdomain( 'wc-enterprise', false, dirname( WCET_PLUGIN_BASENAME ) . '/languages/' );
     }
 
-    public function declare_hpos_compatibility(): void {
+    public function declare_hpos_compatibility() {
         if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
             \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
         }
     }
 
-    public function activate(): void {
+    public function activate() {
         // Create custom tables.
         $this->create_tables();
         flush_rewrite_rules();
         update_option( 'wcet_version', WCET_VERSION );
     }
 
-    public function deactivate(): void {
+    public function deactivate() {
         flush_rewrite_rules();
         wp_clear_scheduled_hook( 'wcet_background_cleanup' );
         wp_clear_scheduled_hook( 'wcet_analytics_aggregate' );
     }
 
-    private function create_tables(): void {
+    private function create_tables() {
         global $wpdb;
         $charset = $wpdb->get_charset_collate();
 

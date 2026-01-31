@@ -33,14 +33,14 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Get singleton instance.
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -59,7 +59,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 *
 	 * @return void
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		// GET /orders — list orders.
 		register_rest_route(
 			$this->namespace,
@@ -557,7 +557,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 * @param WC_Order $order Order object.
 	 * @return array
 	 */
-	private function prepare_order_data( WC_Order $order ): array {
+	private function prepare_order_data( WC_Order $order ) {
 		// Line items.
 		$line_items = [];
 		foreach ( $order->get_items() as $item_id => $item ) {
@@ -684,7 +684,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 * @param int              $total_pages Total pages.
 	 * @return void
 	 */
-	private function set_pagination_links( WP_REST_Response $response, int $page, int $total_pages ): void {
+	private function set_pagination_links( WP_REST_Response $response, int $page, int $total_pages ) {
 		$base_url = rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) );
 		$links    = [];
 
@@ -712,7 +712,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_collection_params(): array {
+	public function get_collection_params() {
 		return [
 			'page'      => [
 				'description'       => __( 'Current page of the collection.', 'wc-enterprise' ),
@@ -769,7 +769,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 *
 	 * @return array
 	 */
-	private function get_create_params(): array {
+	private function get_create_params() {
 		return [
 			'billing'              => [
 				'description' => __( 'Billing address.', 'wc-enterprise' ),
@@ -857,7 +857,7 @@ class WCET_REST_Orders extends WP_REST_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_item_schema(): array {
+	public function get_item_schema() {
 		if ( $this->schema ) {
 			return $this->add_additional_fields_schema( $this->schema );
 		}

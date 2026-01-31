@@ -47,14 +47,14 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Get singleton instance.
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -78,7 +78,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 *
 	 * @return void
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -157,7 +157,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 *
 	 * @return bool
 	 */
-	private function check_read_permission(): bool {
+	private function check_read_permission() {
 		// Allow authenticated WordPress users who can at minimum read products.
 		if ( current_user_can( 'read' ) ) {
 			return true;
@@ -280,7 +280,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param int             $page     Current page number.
 	 * @return array
 	 */
-	private function build_query_args( WP_REST_Request $request, int $per_page, int $page ): array {
+	private function build_query_args( WP_REST_Request $request, int $per_page, int $page ) {
 		$args = [
 			'limit'  => $per_page,
 			'offset' => ( $page - 1 ) * $per_page,
@@ -361,7 +361,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param float|null $max_price Maximum price.
 	 * @return array
 	 */
-	private function build_price_meta_query( ?float $min_price, ?float $max_price ): array {
+	private function build_price_meta_query( ?float $min_price, ?float $max_price ) {
 		$meta_query = [ 'relation' => 'AND' ];
 
 		if ( null !== $min_price ) {
@@ -391,7 +391,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param WC_Product $product Product object.
 	 * @return array
 	 */
-	private function prepare_product_data( WC_Product $product ): array {
+	private function prepare_product_data( WC_Product $product ) {
 		$categories = [];
 		$terms      = get_the_terms( $product->get_id(), 'product_cat' );
 		if ( $terms && ! is_wp_error( $terms ) ) {
@@ -486,7 +486,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param WP_REST_Request  $request     The request object.
 	 * @return void
 	 */
-	private function set_pagination_headers( WP_REST_Response $response, int $total, int $total_pages, WP_REST_Request $request ): void {
+	private function set_pagination_headers( WP_REST_Response $response, int $total, int $total_pages, WP_REST_Request $request ) {
 		$response->header( 'X-WP-Total', $total );
 		$response->header( 'X-WP-TotalPages', $total_pages );
 
@@ -521,7 +521,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param array  $params The request parameters.
 	 * @return string
 	 */
-	private function build_cache_key( string $type, array $params ): string {
+	private function build_cache_key( string $type, array $params ) {
 		ksort( $params );
 		return sprintf(
 			'wcet_products_%s_%s',
@@ -536,7 +536,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param int $product_id The product ID.
 	 * @return void
 	 */
-	public function invalidate_product_cache( int $product_id ): void {
+	public function invalidate_product_cache( int $product_id ) {
 		// Invalidate the single-product cache.
 		$single_key = $this->build_cache_key( 'single', [ 'id' => $product_id ] );
 		wp_cache_delete( $single_key, self::CACHE_GROUP );
@@ -560,7 +560,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 * @param WC_Product $product The product object.
 	 * @return void
 	 */
-	public function invalidate_product_stock_cache( WC_Product $product ): void {
+	public function invalidate_product_stock_cache( WC_Product $product ) {
 		$this->invalidate_product_cache( $product->get_id() );
 	}
 
@@ -569,7 +569,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_collection_params(): array {
+	public function get_collection_params() {
 		return [
 			'page'         => [
 				'description'       => __( 'Current page of the collection.', 'wc-enterprise' ),
@@ -665,7 +665,7 @@ class WCET_REST_Products extends WP_REST_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_item_schema(): array {
+	public function get_item_schema() {
 		if ( $this->schema ) {
 			return $this->add_additional_fields_schema( $this->schema );
 		}

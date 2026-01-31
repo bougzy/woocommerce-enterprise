@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Background_Jobs {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
     /** Maximum jobs to process per cron run */
     private const BATCH_SIZE = 20;
@@ -20,9 +20,9 @@ class WCET_Background_Jobs {
     private const LOCK_TIMEOUT = 300;
 
     /** Registered job handlers: type => callable */
-    private array $handlers = [];
+    private $handlers = [];
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -53,7 +53,7 @@ class WCET_Background_Jobs {
         add_action( 'wp_ajax_wcet_cancel_job', [ $this, 'ajax_cancel_job' ] );
     }
 
-    public function add_cron_interval( array $schedules ): array {
+    public function add_cron_interval( array $schedules ) {
         $schedules['every_minute'] = [
             'interval' => 60,
             'display'  => __( 'Every Minute', 'wc-enterprise' ),
@@ -67,14 +67,14 @@ class WCET_Background_Jobs {
      * @param string   $type     Job type identifier.
      * @param callable $handler  Receives the decoded payload array. Must return true on success.
      */
-    public function register_handler( string $type, callable $handler ): void {
+    public function register_handler( string $type, callable $handler ) {
         $this->handlers[ $type ] = $handler;
     }
 
     /**
      * Dispatch a new background job.
      */
-    public function dispatch( string $type, array $payload = [], ?string $scheduled_at = null, int $priority = 10 ): int {
+    public function dispatch( string $type, array $payload = [], ?string $scheduled_at = null, int $priority = 10 ) {
         global $wpdb;
 
         $wpdb->insert( $wpdb->prefix . 'wcet_background_jobs', [
@@ -96,7 +96,7 @@ class WCET_Background_Jobs {
     /**
      * Dispatch a job to run after a delay.
      */
-    public function dispatch_delayed( string $type, array $payload, int $delay_seconds ): int {
+    public function dispatch_delayed( string $type, array $payload, int $delay_seconds ) {
         $scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay_seconds );
         return $this->dispatch( $type, $payload, $scheduled );
     }
@@ -104,7 +104,7 @@ class WCET_Background_Jobs {
     /**
      * Process the job queue.
      */
-    public function process_queue(): void {
+    public function process_queue() {
         global $wpdb;
 
         // Acquire a processing lock to prevent concurrent execution.
@@ -138,7 +138,7 @@ class WCET_Background_Jobs {
     /**
      * Process a single job.
      */
-    private function process_job( object $job ): void {
+    private function process_job( object $job ) {
         global $wpdb;
 
         $table = $wpdb->prefix . 'wcet_background_jobs';
@@ -202,9 +202,9 @@ class WCET_Background_Jobs {
     /**
      * Register built-in job handlers.
      */
-    private function register_default_handlers(): void {
+    private function register_default_handlers() {
         // Search reindex job.
-        $this->register_handler( 'reindex_product', function ( array $payload ): bool {
+        $this->register_handler( 'reindex_product', function ( array $payload ) {
             $product_id = $payload['product_id'] ?? 0;
             if ( $product_id && class_exists( 'WCET_Search_Engine' ) ) {
                 WCET_Search_Engine::instance()->index_product( $product_id );
@@ -213,7 +213,7 @@ class WCET_Background_Jobs {
         } );
 
         // Bulk email notification job.
-        $this->register_handler( 'send_notification', function ( array $payload ): bool {
+        $this->register_handler( 'send_notification', function ( array $payload ) {
             $to      = $payload['to'] ?? '';
             $subject = $payload['subject'] ?? '';
             $body    = $payload['body'] ?? '';
@@ -224,7 +224,7 @@ class WCET_Background_Jobs {
         } );
 
         // Analytics aggregation job.
-        $this->register_handler( 'aggregate_analytics', function ( array $payload ): bool {
+        $this->register_handler( 'aggregate_analytics', function ( array $payload ) {
             if ( class_exists( 'WCET_Analytics' ) ) {
                 WCET_Analytics::instance()->run_aggregation();
             }
@@ -232,7 +232,7 @@ class WCET_Background_Jobs {
         } );
 
         // Cache warming job.
-        $this->register_handler( 'warm_cache', function ( array $payload ): bool {
+        $this->register_handler( 'warm_cache', function ( array $payload ) {
             if ( class_exists( 'WCET_Object_Cache' ) ) {
                 WCET_Object_Cache::instance()->warm_product_cache();
             }
@@ -240,7 +240,7 @@ class WCET_Background_Jobs {
         } );
 
         // Order export job.
-        $this->register_handler( 'export_orders', function ( array $payload ): bool {
+        $this->register_handler( 'export_orders', function ( array $payload ) {
             $date_from = $payload['date_from'] ?? '';
             $date_to   = $payload['date_to'] ?? '';
             // Generate CSV and store as attachment.
@@ -273,7 +273,7 @@ class WCET_Background_Jobs {
     /**
      * Remove completed jobs older than 7 days.
      */
-    public function cleanup_completed_jobs(): void {
+    public function cleanup_completed_jobs() {
         global $wpdb;
         $wpdb->query( $wpdb->prepare(
             "DELETE FROM {$wpdb->prefix}wcet_background_jobs
@@ -285,7 +285,7 @@ class WCET_Background_Jobs {
     /**
      * Get job queue statistics.
      */
-    public function get_stats(): array {
+    public function get_stats() {
         global $wpdb;
         $table = $wpdb->prefix . 'wcet_background_jobs';
 
@@ -299,7 +299,7 @@ class WCET_Background_Jobs {
 
     // --- Admin ---
 
-    public function register_admin_page(): void {
+    public function register_admin_page() {
         add_submenu_page(
             'woocommerce',
             __( 'Background Jobs', 'wc-enterprise' ),
@@ -310,7 +310,7 @@ class WCET_Background_Jobs {
         );
     }
 
-    public function render_admin_page(): void {
+    public function render_admin_page() {
         global $wpdb;
         $stats = $this->get_stats();
         $jobs  = $wpdb->get_results(
@@ -371,7 +371,7 @@ class WCET_Background_Jobs {
         <?php
     }
 
-    public function ajax_retry_job(): void {
+    public function ajax_retry_job() {
         check_ajax_referer( 'wcet_jobs', '_wpnonce' );
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_send_json_error( 'Unauthorized' );
@@ -388,7 +388,7 @@ class WCET_Background_Jobs {
         wp_send_json_success();
     }
 
-    public function ajax_cancel_job(): void {
+    public function ajax_cancel_job() {
         check_ajax_referer( 'wcet_jobs', '_wpnonce' );
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_send_json_error( 'Unauthorized' );

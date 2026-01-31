@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Product_Filter {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -30,7 +30,7 @@ class WCET_Product_Filter {
     /**
      * Handle AJAX filter requests.
      */
-    public function handle_filter_request(): void {
+    public function handle_filter_request() {
         check_ajax_referer( 'wcet-filter', 'nonce' );
 
         $filters = $this->sanitize_filters( $_POST['filters'] ?? [] );
@@ -45,7 +45,7 @@ class WCET_Product_Filter {
     /**
      * Query products with the applied filters.
      */
-    public function query_products( array $filters, int $page = 1, int $per_page = 24 ): array {
+    public function query_products( array $filters, int $page = 1, int $per_page = 24 ) {
         $args = [
             'post_type'      => 'product',
             'posts_per_page' => $per_page,
@@ -194,18 +194,18 @@ class WCET_Product_Filter {
     /**
      * Render the filter sidebar on shop pages.
      */
-    public function render_filter_sidebar(): void {
+    public function render_filter_sidebar() {
         if ( ! is_shop() && ! is_product_category() && ! is_product_tag() ) {
             return;
         }
         echo $this->get_filter_html();
     }
 
-    public function shortcode_output(): string {
+    public function shortcode_output() {
         return $this->get_filter_html();
     }
 
-    private function get_filter_html(): string {
+    private function get_filter_html() {
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => true ] );
         $attributes = wc_get_attribute_taxonomies();
         $price_range = $this->get_price_range();
@@ -272,7 +272,7 @@ class WCET_Product_Filter {
         return ob_get_clean();
     }
 
-    private function get_price_range(): array {
+    private function get_price_range() {
         global $wpdb;
         $cache_key = 'wcet_price_range';
         $range     = wp_cache_get( $cache_key, 'wcet' );
@@ -294,7 +294,7 @@ class WCET_Product_Filter {
         return [ 'min' => (float) $range['min_price'], 'max' => (float) $range['max_price'] ];
     }
 
-    private function sanitize_filters( $raw ): array {
+    private function sanitize_filters( $raw ) {
         if ( ! is_array( $raw ) ) {
             return [];
         }
@@ -318,7 +318,7 @@ class WCET_Product_Filter {
         return $clean;
     }
 
-    public function enqueue_assets(): void {
+    public function enqueue_assets() {
         if ( ! is_shop() && ! is_product_category() && ! is_product_tag() ) {
             return;
         }

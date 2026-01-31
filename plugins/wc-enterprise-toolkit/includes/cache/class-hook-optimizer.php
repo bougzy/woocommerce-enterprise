@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Hook_Optimizer {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -29,7 +29,7 @@ class WCET_Hook_Optimizer {
     /**
      * Remove expensive hooks that are unnecessary for frontend performance.
      */
-    public function optimize_hooks(): void {
+    public function optimize_hooks() {
         if ( is_admin() ) {
             return;
         }
@@ -62,7 +62,7 @@ class WCET_Hook_Optimizer {
     /**
      * Remove WooCommerce assets from pages where they're not needed.
      */
-    public function optimize_assets(): void {
+    public function optimize_assets() {
         if ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() ) {
             return;
         }
@@ -96,9 +96,9 @@ class WCET_Hook_Optimizer {
     /**
      * Disable WooCommerce features that are unnecessary for high-performance stores.
      */
-    public function disable_unnecessary_features(): void {
+    public function disable_unnecessary_features() {
         // Disable WooCommerce marketing hub.
-        add_filter( 'woocommerce_admin_features', function ( array $features ): array {
+        add_filter( 'woocommerce_admin_features', function ( array $features ) {
             return array_values( array_diff( $features, [
                 'marketing',
                 'remote-inbox-notifications',
@@ -123,7 +123,7 @@ class WCET_Hook_Optimizer {
         }
 
         // Reduce transient bloat.
-        add_filter( 'woocommerce_delete_version_transients_limit', fn() => 100 );
+        add_filter( 'woocommerce_delete_version_transients_limit', function() { return 100; } );
     }
 
     /**
@@ -139,7 +139,7 @@ class WCET_Hook_Optimizer {
     /**
      * Determine if the current page needs cart functionality.
      */
-    private function page_needs_cart(): bool {
+    private function page_needs_cart() {
         return is_woocommerce() || is_cart() || is_checkout() || is_account_page()
             || apply_filters( 'wcet_page_needs_cart', false );
     }
@@ -147,7 +147,7 @@ class WCET_Hook_Optimizer {
     /**
      * Get optimization report for the admin dashboard.
      */
-    public function get_optimization_report(): array {
+    public function get_optimization_report() {
         return [
             'hooks_removed'    => $this->count_removed_hooks(),
             'scripts_dequeued' => $this->count_dequeued_scripts(),
@@ -160,12 +160,12 @@ class WCET_Hook_Optimizer {
         ];
     }
 
-    private function count_removed_hooks(): int {
+    private function count_removed_hooks() {
         // Approximate count of hooks removed by this optimizer.
         return 8;
     }
 
-    private function count_dequeued_scripts(): int {
+    private function count_dequeued_scripts() {
         return 9;
     }
 }

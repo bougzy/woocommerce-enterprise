@@ -10,10 +10,10 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Query_Optimizer {
 
-    private static ?self $instance = null;
-    private array $query_log = [];
+    private static $instance = null;
+    private $query_log = [];
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -45,7 +45,7 @@ class WCET_Query_Optimizer {
     /**
      * Optimize the main product catalog query.
      */
-    public function optimize_product_query( WP_Query $query ): WP_Query {
+    public function optimize_product_query( WP_Query $query ) {
         if ( ! $query->is_main_query() ) {
             return $query;
         }
@@ -72,7 +72,7 @@ class WCET_Query_Optimizer {
     /**
      * Optimize SQL clauses for product queries.
      */
-    public function optimize_post_clauses( array $clauses, WP_Query $query ): array {
+    public function optimize_post_clauses( array $clauses, WP_Query $query ) {
         if ( ! isset( $query->query_vars['post_type'] ) || 'product' !== $query->query_vars['post_type'] ) {
             return $clauses;
         }
@@ -88,7 +88,7 @@ class WCET_Query_Optimizer {
     /**
      * Optimize order queries for the admin panel.
      */
-    public function optimize_order_query( array $args ): array {
+    public function optimize_order_query( array $args ) {
         // Default to recent orders only.
         if ( empty( $args['date_created'] ) && empty( $args['s'] ) ) {
             $args['date_created'] = '>' . gmdate( 'Y-m-d', strtotime( '-90 days' ) );
@@ -105,7 +105,7 @@ class WCET_Query_Optimizer {
     /**
      * Pre-load product meta to prevent n+1 queries on archive pages.
      */
-    public function preload_product_meta(): void {
+    public function preload_product_meta() {
         global $wp_query;
 
         if ( empty( $wp_query->posts ) ) {
@@ -132,7 +132,7 @@ class WCET_Query_Optimizer {
     /**
      * Add missing database indexes for better query performance.
      */
-    public function maybe_add_indexes(): void {
+    public function maybe_add_indexes() {
         if ( get_option( 'wcet_indexes_added' ) ) {
             return;
         }
@@ -159,7 +159,7 @@ class WCET_Query_Optimizer {
     /**
      * Log queries for debug analysis.
      */
-    public function log_query( string $query ): string {
+    public function log_query( string $query ) {
         $start = microtime( true );
 
         // Store for later analysis.
@@ -174,7 +174,7 @@ class WCET_Query_Optimizer {
     /**
      * Report slow queries in debug mode.
      */
-    public function report_slow_queries(): void {
+    public function report_slow_queries() {
         if ( ! defined( 'SAVEQUERIES' ) || ! SAVEQUERIES ) {
             return;
         }
@@ -197,7 +197,7 @@ class WCET_Query_Optimizer {
     /**
      * Batch get products efficiently — avoid wc_get_product() in a loop.
      */
-    public function batch_get_products( array $product_ids ): array {
+    public function batch_get_products( array $product_ids ) {
         if ( empty( $product_ids ) ) {
             return [];
         }
@@ -218,18 +218,18 @@ class WCET_Query_Optimizer {
     /**
      * Get query statistics for the performance monitor.
      */
-    public function get_query_stats(): array {
+    public function get_query_stats() {
         global $wpdb;
 
         return [
             'total_queries' => $wpdb->num_queries,
             'slow_queries'  => defined( 'SAVEQUERIES' ) && SAVEQUERIES
-                ? count( array_filter( $wpdb->queries, fn( $q ) => $q[1] > 0.05 ) )
+                ? count( array_filter( $wpdb->queries, function( $q ) { return $q[1] > 0.05; } ) )
                 : 'N/A (SAVEQUERIES disabled)',
         ];
     }
 
-    private function needs_pagination( WP_Query $query ): bool {
+    private function needs_pagination( WP_Query $query ) {
         return ! empty( $query->query_vars['paged'] ) || ! empty( $query->query_vars['offset'] );
     }
 }

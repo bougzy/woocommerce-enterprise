@@ -42,7 +42,7 @@ add_action( 'woocommerce_after_single_product_summary', function () {
 }, 20 );
 
 // Optimize checkout field output.
-add_filter( 'woocommerce_form_field_args', function ( array $args, string $key ): array {
+add_filter( 'woocommerce_form_field_args', function ( array $args, string $key ) {
     // Add autocomplete attributes for faster checkout.
     $autocomplete_map = [
         'billing_first_name' => 'given-name',

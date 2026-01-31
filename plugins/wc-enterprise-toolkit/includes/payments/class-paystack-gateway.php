@@ -31,7 +31,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @var WC_Logger|null
 	 */
-	private ?WC_Logger $logger = null;
+	private $logger = null;
 
 	/**
 	 * Constructor — set up gateway properties and hooks.
@@ -81,7 +81,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Define gateway settings fields.
 	 */
-	public function init_form_fields(): void {
+	public function init_form_fields() {
 		$this->form_fields = [
 			'enabled'             => [
 				'title'   => __( 'Enable/Disable', 'wc-enterprise' ),
@@ -173,7 +173,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	public function is_available(): bool {
+	public function is_available() {
 		if ( 'yes' !== $this->enabled ) {
 			return false;
 		}
@@ -197,7 +197,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Render payment fields on the checkout form.
 	 */
-	public function payment_fields(): void {
+	public function payment_fields() {
 		if ( $this->description ) {
 			echo wp_kses_post( wpautop( wptexturize( $this->description ) ) );
 		}
@@ -214,7 +214,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @param int $order_id WooCommerce order ID.
 	 */
-	public function receipt_page( int $order_id ): void {
+	public function receipt_page( int $order_id ) {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -245,7 +245,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id WooCommerce order ID.
 	 * @return array{result: string, redirect?: string}
 	 */
-	public function process_payment( $order_id ): array {
+	public function process_payment( $order_id ) {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -296,7 +296,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Handle the callback from Paystack after payment.
 	 */
-	public function handle_callback(): void {
+	public function handle_callback() {
 		$reference = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 		$trxref    = isset( $_GET['trxref'] ) ? sanitize_text_field( wp_unslash( $_GET['trxref'] ) ) : '';
 
@@ -351,7 +351,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 * @param WC_Order $order            WooCommerce order.
 	 * @param array    $transaction_data Verified transaction data from Paystack.
 	 */
-	public function process_verified_transaction( WC_Order $order, array $transaction_data ): void {
+	public function process_verified_transaction( WC_Order $order, array $transaction_data ) {
 		// Idempotency: do not process twice.
 		if ( $order->is_paid() ) {
 			return;
@@ -558,7 +558,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	public function is_test_mode(): bool {
+	public function is_test_mode() {
 		return 'yes' === $this->get_option( 'test_mode', 'yes' );
 	}
 
@@ -569,7 +569,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 * @param string $currency ISO 4217 currency code.
 	 * @return int Amount in smallest currency unit.
 	 */
-	private function get_paystack_amount( float $amount, string $currency ): int {
+	private function get_paystack_amount( float $amount, string $currency ) {
 		// All Paystack currencies use 2 decimal places.
 		return absint( round( $amount * 100 ) );
 	}
@@ -580,7 +580,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 * @param WC_Order $order WooCommerce order.
 	 * @return string
 	 */
-	private function generate_reference( WC_Order $order ): string {
+	private function generate_reference( WC_Order $order ) {
 		return 'wcet_' . $order->get_id() . '_' . bin2hex( random_bytes( 8 ) );
 	}
 
@@ -605,7 +605,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_webhook_secret(): string {
+	public function get_webhook_secret() {
 		return $this->webhook_secret;
 	}
 
@@ -614,7 +614,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_secret_key(): string {
+	public function get_secret_key() {
 		return $this->secret_key;
 	}
 
@@ -625,7 +625,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 	 * @param string $message Log message.
 	 * @param array  $context Additional context data.
 	 */
-	private function log( string $level, string $message, array $context = [] ): void {
+	private function log( string $level, string $message, array $context = [] ) {
 		if ( 'yes' !== $this->get_option( 'logging', 'no' ) ) {
 			return;
 		}
@@ -639,7 +639,7 @@ class WCET_Paystack_Gateway extends WC_Payment_Gateway {
 }
 
 // Register the gateway with WooCommerce.
-add_filter( 'woocommerce_payment_gateways', function ( array $gateways ): array {
+add_filter( 'woocommerce_payment_gateways', function ( array $gateways ) {
 	$gateways[] = 'WCET_Paystack_Gateway';
 	return $gateways;
 } );

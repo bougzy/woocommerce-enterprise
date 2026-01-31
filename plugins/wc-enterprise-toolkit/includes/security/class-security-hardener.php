@@ -24,7 +24,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * Maximum failed login attempts before lockout.
@@ -125,7 +125,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -182,13 +182,13 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function disable_xmlrpc(): void {
+	private function disable_xmlrpc() {
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 
 		// Also remove the pingback header.
 		add_filter(
 			'wp_headers',
-			static function ( array $headers ): array {
+			static function ( array $headers ) {
 				unset( $headers['X-Pingback'] );
 				return $headers;
 			}
@@ -207,10 +207,10 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function disable_rest_user_enumeration(): void {
+	private function disable_rest_user_enumeration() {
 		add_filter(
 			'rest_endpoints',
-			static function ( array $endpoints ): array {
+			static function ( array $endpoints ) {
 				if ( ! current_user_can( 'manage_options' ) ) {
 					$targets = array( '/wp/v2/users', '/wp/v2/users/(?P<id>[\d]+)' );
 					foreach ( $targets as $route ) {
@@ -226,7 +226,7 @@ final class WCET_Security_Hardener {
 		// Block ?author=N enumeration on the front end.
 		add_action(
 			'template_redirect',
-			static function (): void {
+			static function () {
 				if ( isset( $_GET['author'] ) && ! is_admin() ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					self::log_event( 'User enumeration attempt blocked via ?author query parameter.' );
 					wp_safe_redirect( home_url(), 301 );
@@ -248,10 +248,10 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function add_security_headers(): void {
+	private function add_security_headers() {
 		add_action(
 			'send_headers',
-			static function (): void {
+			static function () {
 				// Prevent MIME-type sniffing.
 				header( 'X-Content-Type-Options: nosniff' );
 
@@ -304,7 +304,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function rate_limit_logins(): void {
+	private function rate_limit_logins() {
 		// Check lockout BEFORE authentication runs.
 		add_filter(
 			'authenticate',
@@ -361,7 +361,7 @@ final class WCET_Security_Hardener {
 	 * @param string $username The username that failed.
 	 * @return void
 	 */
-	public function record_failed_login( string $username ): void {
+	public function record_failed_login( string $username ) {
 		$ip       = self::get_client_ip();
 		$key      = self::TRANSIENT_PREFIX . md5( $ip );
 		$attempts = (int) get_transient( $key );
@@ -384,7 +384,7 @@ final class WCET_Security_Hardener {
 	 * @param string $username The username that logged in.
 	 * @return void
 	 */
-	public function clear_login_attempts( string $username ): void {
+	public function clear_login_attempts( string $username ) {
 		$ip  = self::get_client_ip();
 		$key = self::TRANSIENT_PREFIX . md5( $ip );
 		delete_transient( $key );
@@ -399,7 +399,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function disable_file_editing(): void {
+	private function disable_file_editing() {
 		if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
 			define( 'DISALLOW_FILE_EDIT', true );
 		}
@@ -414,7 +414,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function hide_wp_version(): void {
+	private function hide_wp_version() {
 		// Meta generator tag in <head>.
 		remove_action( 'wp_head', 'wp_generator' );
 
@@ -432,7 +432,7 @@ final class WCET_Security_Hardener {
 	 * @param string $src Asset URL.
 	 * @return string
 	 */
-	public function remove_version_query( string $src ): string {
+	public function remove_version_query( string $src ) {
 		if ( strpos( $src, 'ver=' ) !== false ) {
 			$src = remove_query_arg( 'ver', $src );
 		}
@@ -448,7 +448,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	public function on_activation(): void {
+	public function on_activation() {
 		$this->write_htaccess_rules();
 	}
 
@@ -460,7 +460,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return bool True on success, false on failure.
 	 */
-	private function write_htaccess_rules(): bool {
+	private function write_htaccess_rules() {
 		$htaccess_file = ABSPATH . '.htaccess';
 
 		if ( ! is_writable( $htaccess_file ) && ! is_writable( dirname( $htaccess_file ) ) ) {
@@ -515,10 +515,10 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function prevent_directory_browsing(): void {
+	private function prevent_directory_browsing() {
 		add_action(
 			'send_headers',
-			static function (): void {
+			static function () {
 				header( 'X-Robots-Tag: noindex, nofollow', false );
 			}
 		);
@@ -533,7 +533,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function sanitize_uploads(): void {
+	private function sanitize_uploads() {
 		// Restrict allowed MIME types.
 		add_filter( 'upload_mimes', array( $this, 'filter_upload_mimes' ) );
 
@@ -547,7 +547,7 @@ final class WCET_Security_Hardener {
 	 * @param array<string,string> $mimes Default MIME types.
 	 * @return array<string,string>
 	 */
-	public function filter_upload_mimes( array $mimes ): array {
+	public function filter_upload_mimes( array $mimes ) {
 		/**
 		 * Filter the allowed MIME types for uploads.
 		 *
@@ -564,7 +564,7 @@ final class WCET_Security_Hardener {
 	 * @param array{name:string,type:string,tmp_name:string,error:int,size:int} $file File data.
 	 * @return array{name:string,type:string,tmp_name:string,error:int|string,size:int}
 	 */
-	public function validate_upload( array $file ): array {
+	public function validate_upload( array $file ) {
 		if ( ! empty( $file['error'] ) ) {
 			return $file;
 		}
@@ -634,7 +634,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	private function csrf_protection(): void {
+	private function csrf_protection() {
 		add_action(
 			'wp_ajax_wcet_security_action',
 			array( $this, 'handle_ajax_action' )
@@ -643,7 +643,7 @@ final class WCET_Security_Hardener {
 		// Inject nonce into WooCommerce checkout & account pages.
 		add_action(
 			'wp_enqueue_scripts',
-			static function (): void {
+			static function () {
 				if ( function_exists( 'is_checkout' ) && ( is_checkout() || is_account_page() ) ) {
 					wp_localize_script(
 						'wc-checkout',
@@ -665,7 +665,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	public function handle_ajax_action(): void {
+	public function handle_ajax_action() {
 		// Verify nonce.
 		if (
 			! isset( $_POST['_wcet_nonce'] ) ||
@@ -717,7 +717,7 @@ final class WCET_Security_Hardener {
 	 * @param string $message Human-readable event description.
 	 * @return void
 	 */
-	public static function log_event( string $message ): void {
+	public static function log_event( string $message ) {
 		$entry = sprintf(
 			'[WCET Security] [%s] %s',
 			gmdate( 'Y-m-d H:i:s' ),
@@ -746,7 +746,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	public function register_admin_page(): void {
+	public function register_admin_page() {
 		add_submenu_page(
 			'woocommerce',
 			__( 'Security Status', 'wc-enterprise' ),
@@ -763,7 +763,7 @@ final class WCET_Security_Hardener {
 	 * @param string $hook_suffix The current admin page hook.
 	 * @return void
 	 */
-	public function enqueue_admin_assets( string $hook_suffix ): void {
+	public function enqueue_admin_assets( string $hook_suffix ) {
 		if ( 'woocommerce_page_' . self::ADMIN_SLUG !== $hook_suffix ) {
 			return;
 		}
@@ -781,7 +781,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return void
 	 */
-	public function render_admin_page(): void {
+	public function render_admin_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wc-enterprise' ) );
 		}
@@ -896,7 +896,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return array<int,array{label:string,pass:bool,detail:string}>
 	 */
-	private function run_security_checks(): array {
+	private function run_security_checks() {
 		$checks = array();
 
 		// 1. DISALLOW_FILE_EDIT.
@@ -1009,7 +1009,7 @@ final class WCET_Security_Hardener {
 	 *
 	 * @return string
 	 */
-	private static function get_client_ip(): string {
+	private static function get_client_ip() {
 		$headers = array(
 			'HTTP_CF_CONNECTING_IP', // Cloudflare.
 			'HTTP_X_FORWARDED_FOR',

@@ -6,7 +6,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // --- Preconnect to CDN / external resources ---
-add_filter( 'wp_resource_hints', function ( array $urls, string $relation ): array {
+add_filter( 'wp_resource_hints', function ( array $urls, string $relation ) {
     if ( 'preconnect' === $relation ) {
         $urls[] = [ 'href' => 'https://fonts.gstatic.com', 'crossorigin' => true ];
     }
@@ -27,7 +27,7 @@ add_action( 'wp_enqueue_scripts', function () {
 }, 100 );
 
 // --- Add defer/async to non-critical scripts ---
-add_filter( 'script_loader_tag', function ( string $tag, string $handle ): string {
+add_filter( 'script_loader_tag', function ( string $tag, string $handle ) {
     $defer_handles = [ 'wcpt-main', 'comment-reply' ];
     if ( in_array( $handle, $defer_handles, true ) ) {
         return str_replace( ' src', ' defer src', $tag );
@@ -44,16 +44,16 @@ if ( ! defined( 'WP_POST_REVISIONS' ) ) {
 add_action( 'pre_ping', function ( array &$links ) {
     $home = get_option( 'home' );
     foreach ( $links as $i => $link ) {
-        if ( str_starts_with( $link, $home ) ) {
+        if ( strpos( $link, $home ) === 0 ) {
             unset( $links[ $i ] );
         }
     }
 } );
 
 // --- Optimize WooCommerce image loading ---
-add_filter( 'woocommerce_product_get_image', function ( string $image ): string {
+add_filter( 'woocommerce_product_get_image', function ( string $image ) {
     // Ensure loading="lazy" and decoding="async" on product images.
-    if ( ! str_contains( $image, 'loading=' ) ) {
+    if ( strpos( $image, 'loading=' ) === false ) {
         $image = str_replace( '<img', '<img loading="lazy" decoding="async"', $image );
     }
     return $image;

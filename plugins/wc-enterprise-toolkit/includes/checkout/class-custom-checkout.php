@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 class WCET_Custom_Checkout {
 
-    private static ?self $instance = null;
+    private static $instance = null;
 
-    public static function instance(): self {
+    public static function instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -48,7 +48,7 @@ class WCET_Custom_Checkout {
     /**
      * Remove unnecessary fields and reorder for conversion optimization.
      */
-    public function optimize_checkout_fields( array $fields ): array {
+    public function optimize_checkout_fields( array $fields ) {
         // Move email to the top for guest checkout identification.
         if ( isset( $fields['billing']['billing_email'] ) ) {
             $fields['billing']['billing_email']['priority'] = 5;
@@ -75,7 +75,7 @@ class WCET_Custom_Checkout {
         return $fields;
     }
 
-    public function optimize_address_fields( array $fields ): array {
+    public function optimize_address_fields( array $fields ) {
         // Reorder for logical flow.
         $priority_order = [
             'first_name' => 10,
@@ -100,7 +100,7 @@ class WCET_Custom_Checkout {
     /**
      * Render multi-step checkout progress indicator.
      */
-    public function render_step_indicator(): void {
+    public function render_step_indicator() {
         if ( ! is_checkout() || is_order_received_page() ) {
             return;
         }
@@ -131,7 +131,7 @@ class WCET_Custom_Checkout {
     /**
      * Express checkout section (Apple Pay, Google Pay placeholders).
      */
-    public function render_express_checkout(): void {
+    public function render_express_checkout() {
         if ( ! is_checkout() || is_order_received_page() ) {
             return;
         }
@@ -145,7 +145,7 @@ class WCET_Custom_Checkout {
         echo '</div>';
     }
 
-    public function enqueue_checkout_assets(): void {
+    public function enqueue_checkout_assets() {
         if ( ! is_checkout() ) {
             return;
         }
@@ -174,14 +174,14 @@ class WCET_Custom_Checkout {
         ] );
     }
 
-    public function custom_session_handler(): string {
+    public function custom_session_handler() {
         // Use the default but with reduced session lifetime for performance.
-        add_filter( 'wc_session_expiring', fn() => 60 * 60 * 2 );      // 2 hours
-        add_filter( 'wc_session_expiration', fn() => 60 * 60 * 24 );    // 24 hours (down from 48h)
+        add_filter( 'wc_session_expiring', function() { return 60 * 60 * 2; } );      // 2 hours
+        add_filter( 'wc_session_expiration', function() { return 60 * 60 * 24; } );    // 24 hours (down from 48h)
         return 'WC_Session_Handler';
     }
 
-    public function save_custom_checkout_data( int $order_id ): void {
+    public function save_custom_checkout_data( int $order_id ) {
         $order = wc_get_order( $order_id );
         if ( ! $order ) {
             return;
@@ -196,7 +196,7 @@ class WCET_Custom_Checkout {
     /**
      * Extended checkout validation.
      */
-    public function validate_checkout( array $data, WP_Error $errors ): void {
+    public function validate_checkout( array $data, WP_Error $errors ) {
         // Validate email domain is not disposable.
         $email = $data['billing_email'] ?? '';
         if ( $email && $this->is_disposable_email( $email ) ) {
@@ -210,7 +210,7 @@ class WCET_Custom_Checkout {
         }
     }
 
-    private function is_disposable_email( string $email ): bool {
+    private function is_disposable_email( string $email ) {
         $domain     = strtolower( substr( strrchr( $email, '@' ), 1 ) );
         $disposable = apply_filters( 'wcet_disposable_email_domains', [
             'tempmail.com', 'throwaway.email', 'guerrillamail.com',
@@ -219,7 +219,7 @@ class WCET_Custom_Checkout {
         return in_array( $domain, $disposable, true );
     }
 
-    private function exceeds_order_velocity( string $ip ): bool {
+    private function exceeds_order_velocity( string $ip ) {
         global $wpdb;
         $count = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders
@@ -230,14 +230,14 @@ class WCET_Custom_Checkout {
         return $count >= (int) apply_filters( 'wcet_max_orders_per_hour', 5 );
     }
 
-    public function optimize_cart_fragments( array $fragments ): array {
+    public function optimize_cart_fragments( array $fragments ) {
         // Only update the cart count, not the entire cart widget.
         $count = WC()->cart ? WC()->cart->get_cart_contents_count() : 0;
         $fragments['.wcet-cart-count'] = '<span class="wcet-cart-count">' . esc_html( $count ) . '</span>';
         return $fragments;
     }
 
-    public function dequeue_unnecessary_scripts(): void {
+    public function dequeue_unnecessary_scripts() {
         if ( ! is_checkout() ) {
             return;
         }

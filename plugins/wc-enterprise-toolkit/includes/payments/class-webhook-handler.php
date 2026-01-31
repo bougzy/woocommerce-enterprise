@@ -17,21 +17,21 @@ class WCET_Webhook_Handler {
 	 *
 	 * @var self|null
 	 */
-	private static ?self $instance = null;
+	private static $instance = null;
 
 	/**
 	 * WC Logger instance.
 	 *
 	 * @var WC_Logger|null
 	 */
-	private ?WC_Logger $logger = null;
+	private $logger = null;
 
 	/**
 	 * Get the singleton instance.
 	 *
 	 * @return self
 	 */
-	public static function instance(): self {
+	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -53,7 +53,7 @@ class WCET_Webhook_Handler {
 	/**
 	 * Handle incoming Stripe webhook requests.
 	 */
-	public function handle_stripe_webhook(): void {
+	public function handle_stripe_webhook() {
 		$payload   = file_get_contents( 'php://input' );
 		$signature = isset( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ) : '';
 
@@ -141,7 +141,7 @@ class WCET_Webhook_Handler {
 	 * @param string $webhook_secret Webhook signing secret.
 	 * @return bool
 	 */
-	private function verify_stripe_signature( string $payload, string $sig_header, string $webhook_secret ): bool {
+	private function verify_stripe_signature( string $payload, string $sig_header, string $webhook_secret ) {
 		// Parse the signature header.
 		$elements = [];
 		foreach ( explode( ',', $sig_header ) as $part ) {
@@ -184,7 +184,7 @@ class WCET_Webhook_Handler {
 	 *
 	 * @param array $intent PaymentIntent data from the webhook event.
 	 */
-	private function handle_stripe_payment_succeeded( array $intent ): void {
+	private function handle_stripe_payment_succeeded( array $intent ) {
 		$intent_id = sanitize_text_field( $intent['id'] ?? '' );
 		$charge_id = sanitize_text_field( $intent['latest_charge'] ?? '' );
 
@@ -224,7 +224,7 @@ class WCET_Webhook_Handler {
 	 *
 	 * @param array $intent PaymentIntent data from the webhook event.
 	 */
-	private function handle_stripe_payment_failed( array $intent ): void {
+	private function handle_stripe_payment_failed( array $intent ) {
 		$intent_id = sanitize_text_field( $intent['id'] ?? '' );
 
 		$order = $this->get_order_by_meta( '_wcet_stripe_intent_id', $intent_id );
@@ -265,7 +265,7 @@ class WCET_Webhook_Handler {
 	 *
 	 * @param array $charge Charge data from the webhook event.
 	 */
-	private function handle_stripe_charge_refunded( array $charge ): void {
+	private function handle_stripe_charge_refunded( array $charge ) {
 		$charge_id = sanitize_text_field( $charge['id'] ?? '' );
 
 		$order = $this->get_order_by_meta( '_wcet_stripe_charge_id', $charge_id );
@@ -329,7 +329,7 @@ class WCET_Webhook_Handler {
 	/**
 	 * Handle incoming Paystack webhook requests.
 	 */
-	public function handle_paystack_webhook(): void {
+	public function handle_paystack_webhook() {
 		$payload   = file_get_contents( 'php://input' );
 		$signature = isset( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ) ) : '';
 
@@ -404,7 +404,7 @@ class WCET_Webhook_Handler {
 	 * @param string $secret_key Paystack secret key.
 	 * @return bool
 	 */
-	private function verify_paystack_signature( string $payload, string $signature, string $secret_key ): bool {
+	private function verify_paystack_signature( string $payload, string $signature, string $secret_key ) {
 		if ( empty( $signature ) || empty( $secret_key ) ) {
 			return false;
 		}
@@ -419,7 +419,7 @@ class WCET_Webhook_Handler {
 	 *
 	 * @param array $data Charge data from the webhook event.
 	 */
-	private function handle_paystack_charge_success( array $data ): void {
+	private function handle_paystack_charge_success( array $data ) {
 		$reference = sanitize_text_field( $data['reference'] ?? '' );
 
 		if ( empty( $reference ) ) {
@@ -526,7 +526,7 @@ class WCET_Webhook_Handler {
 	 * @param string $event_id  Unique event identifier.
 	 * @return bool
 	 */
-	private function is_event_processed( string $provider, string $event_id ): bool {
+	private function is_event_processed( string $provider, string $event_id ) {
 		if ( empty( $event_id ) ) {
 			return false;
 		}
@@ -542,7 +542,7 @@ class WCET_Webhook_Handler {
 	 * @param string $provider Payment provider (stripe, paystack).
 	 * @param string $event_id Unique event identifier.
 	 */
-	private function mark_event_processed( string $provider, string $event_id ): void {
+	private function mark_event_processed( string $provider, string $event_id ) {
 		if ( empty( $event_id ) ) {
 			return;
 		}
@@ -559,7 +559,7 @@ class WCET_Webhook_Handler {
 	 * @param int    $status_code HTTP status code.
 	 * @param string $message     Response message.
 	 */
-	private function send_response( int $status_code, string $message ): void {
+	private function send_response( int $status_code, string $message ) {
 		status_header( $status_code );
 		header( 'Content-Type: application/json' );
 
@@ -577,7 +577,7 @@ class WCET_Webhook_Handler {
 	 * @param string $message Log message.
 	 * @param array  $context Additional context data.
 	 */
-	private function log( string $level, string $message, array $context = [] ): void {
+	private function log( string $level, string $message, array $context = [] ) {
 		if ( null === $this->logger ) {
 			$this->logger = wc_get_logger();
 		}
